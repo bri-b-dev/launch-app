@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { CLUBS } from '../../../lib/mock/training';
 import { useTrainingState } from '../../../lib/hooks/use-training-state';
+import { useClubShots, useClubs, useMargins } from '../../../lib/hooks/use-sqlite-training';
 
 const C = {
   bg: '#071018',
@@ -33,7 +33,27 @@ const MODE_OPTIONS = ['Full Swing', 'Approach', 'Wedge'];
 export default function SessionScreen() {
   const [selectedMode] = useState('Full Swing');
   const { activeClubId, setActiveClubId } = useTrainingState();
-  const club = CLUBS.find((item) => item.id === activeClubId) ?? CLUBS[0];
+  const { rows: clubs, loading: clubsLoading, error: clubsError } = useClubs();
+  const club = clubs.find((item) => item.id === activeClubId) ?? clubs[0];
+  const { rows: targets, loading: marginsLoading } = useMargins(club?.id ?? null);
+  const { rows: shots, loading: shotsLoading } = useClubShots(club?.id ?? null);
+  const leadShot = shots[0];
+
+  if (clubsError != null) {
+    return (
+      <SafeAreaView style={s.safe} edges={['top']}>
+        <View style={s.center}><Text style={s.errorText}>{clubsError}</Text></View>
+      </SafeAreaView>
+    );
+  }
+
+  if (clubsLoading || club == null) {
+    return (
+      <SafeAreaView style={s.safe} edges={['top']}>
+        <View style={s.center}><Text style={s.infoText}>Session wird geladen…</Text></View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
@@ -42,7 +62,7 @@ export default function SessionScreen() {
           <View style={s.heroTop}>
             <View>
               <Text style={s.eyebrow}>Aktive Session</Text>
-              <Text style={s.title}>{club.sessionLabel}</Text>
+              <Text style={s.title}>{club.session_label}</Text>
             </View>
             <View style={s.statePill}>
               <View style={s.stateDot} />
@@ -51,13 +71,13 @@ export default function SessionScreen() {
           </View>
 
           <View style={s.heroBand}>
-            <HeroMetric label="Schläge" value={club.shotCount} />
-            <HeroMetric label="Ø Carry" value={club.avgCarry} />
-            <HeroMetric label="Trefferquote" value={club.hitRate} />
+            <HeroMetric label="Schläge" value={club.shot_count} />
+            <HeroMetric label="Ø Carry" value={club.avg_carry} />
+            <HeroMetric label="Trefferquote" value={club.hit_rate} />
           </View>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.clubRail}>
-            {CLUBS.map((item) => (
+            {clubs.map((item) => (
               <Pressable key={item.id} style={[s.clubChip, item.id === club.id && s.clubChipActive]} onPress={() => setActiveClubId(item.id)}>
                 <Text style={[s.clubChipLabel, item.id === club.id && s.clubChipLabelActive]}>{item.name}</Text>
                 <Text style={[s.clubChipMeta, item.id === club.id && s.clubChipMetaActive]}>{item.target}</Text>
@@ -77,26 +97,36 @@ export default function SessionScreen() {
         <View style={s.section}>
           <View style={s.sectionHeader}>
             <Text style={s.sectionEyebrow}>Letzter Schlag</Text>
-            <Pressable onPress={() => router.push(`/shot/${club.shots[0].id}`)}>
-              <Text style={s.sectionLink}>Details</Text>
-            </Pressable>
+            {leadShot != null && (
+              <Pressable onPress={() => router.push(`/shot/${leadShot.id}`)}>
+                <Text style={s.sectionLink}>Details</Text>
+              </Pressable>
+            )}
           </View>
-          <View style={s.lastShotCard}>
-            <View>
-              <Text style={s.lastShotCarry}>{club.shots[0].carry}</Text>
-              <Text style={s.lastShotUnit}>yards carry</Text>
-            </View>
-            <View style={s.lastShotMeta}>
-              <Text style={s.lastShotShape}>{club.shots[0].shape}</Text>
-              <Text style={s.lastShotNote}>{club.shots[0].note}</Text>
-            </View>
-          </View>
-          <View style={s.liveMetricGrid}>
-            <LiveMetric label="Ball Speed" value={club.shots[0].ballSpeed} unit="mph" />
-            <LiveMetric label="Club Speed" value={club.shots[0].clubSpeed} unit="mph" />
-            <LiveMetric label="VLA" value={club.shots[0].vla} unit="°" />
-            <LiveMetric label="Spin" value={club.shots[0].spin} unit="rpm" />
-          </View>
+          {shotsLoading ? (
+            <Text style={s.infoText}>Schläge werden geladen…</Text>
+          ) : leadShot == null ? (
+            <Text style={s.infoText}>Noch keine Schläge für diesen Club.</Text>
+          ) : (
+            <>
+              <View style={s.lastShotCard}>
+                <View>
+                  <Text style={s.lastShotCarry}>{leadShot.carry}</Text>
+                  <Text style={s.lastShotUnit}>yards carry</Text>
+                </View>
+                <View style={s.lastShotMeta}>
+                  <Text style={s.lastShotShape}>{leadShot.shape}</Text>
+                  <Text style={s.lastShotNote}>{leadShot.note}</Text>
+                </View>
+              </View>
+              <View style={s.liveMetricGrid}>
+                <LiveMetric label="Ball Speed" value={leadShot.ball_speed} unit="mph" />
+                <LiveMetric label="Club Speed" value={leadShot.club_speed} unit="mph" />
+                <LiveMetric label="VLA" value={leadShot.vla} unit="°" />
+                <LiveMetric label="Spin" value={leadShot.spin} unit="rpm" />
+              </View>
+            </>
+          )}
         </View>
 
         <View style={s.section}>
@@ -104,15 +134,15 @@ export default function SessionScreen() {
             <Text style={s.sectionEyebrow}>Zielkorridore</Text>
             <Text style={s.sectionLink}>Margins</Text>
           </View>
-          {club.targets.map((target) => (
+          {marginsLoading ? <Text style={s.infoText}>Margins werden geladen…</Text> : targets.map((target) => (
             <View key={target.label} style={s.targetCard}>
               <View style={[s.targetAccent, { backgroundColor: target.accent === 'green' ? C.green : target.accent === 'blue' ? C.blue : target.accent === 'gold' ? C.gold : C.orange }]} />
               <View style={s.targetBody}>
                 <View style={s.targetTop}>
                   <Text style={s.targetLabel}>{target.label}</Text>
-                  <Text style={[s.targetCurrent, { color: target.accent === 'green' ? C.green : target.accent === 'blue' ? C.blue : target.accent === 'gold' ? C.gold : C.orange }]}>{target.current}</Text>
+                  <Text style={[s.targetCurrent, { color: target.accent === 'green' ? C.green : target.accent === 'blue' ? C.blue : target.accent === 'gold' ? C.gold : C.orange }]}>{target.current_value}</Text>
                 </View>
-                <Text style={s.targetRange}>{target.range}</Text>
+                <Text style={s.targetRange}>{target.range_value}</Text>
               </View>
             </View>
           ))}
@@ -126,7 +156,7 @@ export default function SessionScreen() {
             </Pressable>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.rail}>
-            {club.shots.map((shot) => (
+            {shots.map((shot) => (
               <Pressable key={shot.id} style={s.railCard} onPress={() => router.push(`/shot/${shot.id}`)}>
                 <View style={[s.railAccent, { backgroundColor: shot.accent === 'green' ? C.green : shot.accent === 'blue' ? C.blue : shot.accent === 'gold' ? C.gold : C.orange }]} />
                 <Text style={s.railCarry}>{shot.carry}</Text>
@@ -192,6 +222,9 @@ const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   scroll: { flex: 1 },
   content: { paddingHorizontal: 16, paddingBottom: 40 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
+  infoText: { fontFamily: FONT.body, color: C.textSecondary, fontSize: 14 },
+  errorText: { fontFamily: FONT.body, color: C.red, fontSize: 14, textAlign: 'center' },
   hero: {
     marginTop: 8,
     marginBottom: 16,

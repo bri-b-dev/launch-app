@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
-import { getSessionById, getClubById } from '../../../lib/mock/training';
+import { useSessionDetail } from '../../../lib/hooks/use-sqlite-training';
 
 const FONT = {
   mono: Platform.OS === 'ios' ? 'Menlo-Regular' : 'monospace',
@@ -13,8 +13,23 @@ const FONT = {
 
 export default function HistoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const session = id ? getSessionById(id) : null;
-  const clubs = session?.clubIds.map((clubId) => getClubById(clubId)).filter(Boolean) ?? [];
+  const { session, clubs, loading, error } = useSessionDetail(id ?? null);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={s.safe}>
+        <View style={s.center}><Text style={s.fallback}>Session wird geladen…</Text></View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error != null) {
+    return (
+      <SafeAreaView style={s.safe}>
+        <View style={s.center}><Text style={s.errorText}>{error}</Text></View>
+      </SafeAreaView>
+    );
+  }
 
   if (!session) {
     return (
@@ -34,13 +49,13 @@ export default function HistoryDetailScreen() {
         <View style={s.summaryCard}>
           <Text style={s.summaryLabel}>Fokus</Text>
           <Text style={s.summaryText}>{session.focus}</Text>
-          <Text style={s.summaryMeta}>{session.shotsLabel} · {session.carryLabel}</Text>
+          <Text style={s.summaryMeta}>{session.shots_label} · {session.carry_label}</Text>
         </View>
 
-        {clubs.map((club) => club && (
+        {clubs.map((club) => (
           <View key={club.id} style={s.clubCard}>
             <Text style={s.clubName}>{club.name}</Text>
-            <Text style={s.clubMeta}>{club.avgCarry} · Trefferquote {club.hitRate}</Text>
+            <Text style={s.clubMeta}>{club.avg_carry} · Trefferquote {club.hit_rate}</Text>
             <Text style={s.clubBody}>{club.target}</Text>
           </View>
         ))}
@@ -54,6 +69,7 @@ const s = StyleSheet.create({
   content: { padding: 16, paddingBottom: 40 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   fallback: { color: '#8DA0B3', fontFamily: FONT.body, fontSize: 16 },
+  errorText: { color: '#DE6E63', fontFamily: FONT.body, fontSize: 16, textAlign: 'center' },
   eyebrow: { fontFamily: FONT.mono, color: '#D2B15C', fontSize: 10, letterSpacing: 2.4, marginBottom: 8 },
   title: { fontFamily: FONT.heavy, color: '#EEF3F7', fontSize: 28, lineHeight: 32, marginBottom: 10 },
   subtitle: { fontFamily: FONT.body, color: '#8DA0B3', fontSize: 15, lineHeight: 22, marginBottom: 16 },

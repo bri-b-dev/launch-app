@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
-import { CLUBS, getClubById } from '../mock/training';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { useClubs } from './use-sqlite-training';
 
 interface TrainingStateValue {
   activeClubId: string;
@@ -9,16 +9,23 @@ interface TrainingStateValue {
 const TrainingStateContext = createContext<TrainingStateValue | null>(null);
 
 export function TrainingStateProvider({ children }: Readonly<{ children: React.ReactNode }>) {
-  const [activeClubId, setActiveClubId] = useState(CLUBS[0]?.id ?? '7i');
+  const { rows: clubs } = useClubs();
+  const [activeClubId, setActiveClubId] = useState('7i');
+
+  useEffect(() => {
+    if (clubs.length === 0) {
+      return;
+    }
+    const hasActiveClub = clubs.some((club) => club.id === activeClubId);
+    if (!hasActiveClub) {
+      setActiveClubId(clubs[0].id);
+    }
+  }, [activeClubId, clubs]);
 
   const value = useMemo(
     () => ({
       activeClubId,
-      setActiveClubId: (clubId: string) => {
-        if (getClubById(clubId) != null) {
-          setActiveClubId(clubId);
-        }
-      },
+      setActiveClubId,
     }),
     [activeClubId],
   );
@@ -36,9 +43,4 @@ export function useTrainingState() {
     throw new Error('useTrainingState must be used inside TrainingStateProvider');
   }
   return context;
-}
-
-export function useActiveClub() {
-  const { activeClubId } = useTrainingState();
-  return getClubById(activeClubId) ?? CLUBS[0];
 }

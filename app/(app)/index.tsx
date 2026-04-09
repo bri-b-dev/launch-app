@@ -17,7 +17,8 @@ import { router } from 'expo-router';
 import type { Href } from 'expo-router';
 import { useMevo } from '@bri-b-dev/gspro-connect-mevoplus';
 import type { ConnectionState } from '../../lib/types/shot';
-import { useActiveClub } from '../../lib/hooks/use-training-state';
+import { useTrainingState } from '../../lib/hooks/use-training-state';
+import { useClubs, useClubShots, useMargins } from '../../lib/hooks/use-sqlite-training';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -82,7 +83,7 @@ interface TrainingPriority {
   tone: 'gold' | 'draw' | 'teal';
 }
 
-const TRAINING_PRIORITIES: TrainingPriority[] = [
+const BASE_TRAINING_PRIORITIES: TrainingPriority[] = [
   { label: 'Swing-Fokus', value: 'Early Extension', tone: 'gold' as const },
   { label: 'Bias', value: 'Draw-orientiert', tone: 'draw' as const },
   { label: 'Aktiver Klub', value: '7-Eisen', tone: 'teal' as const },
@@ -108,7 +109,11 @@ export default function DashboardScreen() {
     arm,
     disconnect,
   } = useMevo();
-  const activeClub = useActiveClub();
+  const { activeClubId } = useTrainingState();
+  const { rows: clubs } = useClubs();
+  const activeClub = clubs.find((club) => club.id === activeClubId) ?? clubs[0] ?? null;
+  const { rows: targets } = useMargins(activeClub?.id ?? null);
+  const { rows: recentShots } = useClubShots(activeClub?.id ?? null);
 
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -160,7 +165,14 @@ export default function DashboardScreen() {
   }, [disconnect, handleActionError]);
 
   // Session-Metadaten kommen in Phase 1 aus useSession()
-  const sessionClub = activeClub.name;
+  const sessionClub = activeClub?.name ?? 'Club lädt…';
+  const trainingPriorities = BASE_TRAINING_PRIORITIES.map((item) =>
+    item.label === 'Aktiver Klub'
+      ? { ...item, value: activeClub?.name ?? 'Lädt…' }
+      : item.label === 'Bias'
+        ? { ...item, value: activeClub?.bias ?? item.value }
+        : item,
+  );
 
   // Connection dot pulse — only when armed
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -314,22 +326,22 @@ export default function DashboardScreen() {
             <Text style={s.panelTitle}>Fokus und Zielkorridore</Text>
           </View>
           <View style={s.priorityRow}>
-            {TRAINING_PRIORITIES.map((item) => (
+            {trainingPriorities.map((item) => (
               <PriorityChip
                 key={item.label}
                 label={item.label}
                 tone={item.tone}
-                value={item.label === 'Aktiver Klub' ? activeClub.name : item.value}
+                value={item.value}
               />
             ))}
           </View>
           <View style={s.corridorGrid}>
-            {activeClub.targets.map((item) => (
+            {targets.map((item) => (
               <TargetCard
                 key={item.label}
                 metric={item.label}
-                range={item.range}
-                note={`Aktuell ${item.current}`}
+                range={item.range_value}
+                note={`Aktuell ${item.current_value}`}
                 accent={item.accent === 'green' ? 'teal' : item.accent === 'blue' ? 'draw' : 'gold'}
               />
             ))}
@@ -342,7 +354,7 @@ export default function DashboardScreen() {
             <Text style={s.panelTitle}>Letzte Schläge auf einen Blick</Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.shotRail}>
-            {activeClub.shots.slice(0, 3).map((item) => (
+            {recentShots.slice(0, 3).map((item) => (
               <RecentShotCard
                 key={item.id}
                 carry={item.carry}

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
-import { getShotById } from '../../../lib/mock/training';
+import { useShotDetail } from '../../../lib/hooks/use-sqlite-training';
 
 const FONT = {
   mono: Platform.OS === 'ios' ? 'Menlo-Regular' : 'monospace',
@@ -13,9 +13,25 @@ const FONT = {
 
 export default function ShotDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const result = id ? getShotById(id) : null;
+  const { shot, loading, error } = useShotDetail(id ?? null);
 
-  if (!result) {
+  if (loading) {
+    return (
+      <SafeAreaView style={s.safe}>
+        <View style={s.center}><Text style={s.fallback}>Schlag wird geladen…</Text></View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error != null) {
+    return (
+      <SafeAreaView style={s.safe}>
+        <View style={s.center}><Text style={s.errorText}>{error}</Text></View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!shot) {
     return (
       <SafeAreaView style={s.safe}>
         <View style={s.center}><Text style={s.fallback}>Schlag nicht gefunden</Text></View>
@@ -23,12 +39,10 @@ export default function ShotDetailScreen() {
     );
   }
 
-  const { shot, club } = result;
-
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-        <Text style={s.eyebrow}>{club.name}</Text>
+        <Text style={s.eyebrow}>{shot.club_name}</Text>
         <Text style={s.title}>{shot.carry}y {shot.shape}</Text>
         <Text style={s.subtitle}>{shot.note}</Text>
 
@@ -38,8 +52,8 @@ export default function ShotDetailScreen() {
         </View>
 
         <View style={s.grid}>
-          <MetricCard label="Ball Speed" value={shot.ballSpeed} unit="mph" />
-          <MetricCard label="Club Speed" value={shot.clubSpeed} unit="mph" />
+          <MetricCard label="Ball Speed" value={shot.ball_speed} unit="mph" />
+          <MetricCard label="Club Speed" value={shot.club_speed} unit="mph" />
           <MetricCard label="VLA" value={shot.vla} unit="°" />
           <MetricCard label="Spin" value={shot.spin} unit="rpm" />
         </View>
@@ -62,6 +76,7 @@ const s = StyleSheet.create({
   content: { padding: 16, paddingBottom: 40 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   fallback: { color: '#8DA0B3', fontFamily: FONT.body, fontSize: 16 },
+  errorText: { color: '#DE6E63', fontFamily: FONT.body, fontSize: 16, textAlign: 'center' },
   eyebrow: { fontFamily: FONT.mono, color: '#D2B15C', fontSize: 10, letterSpacing: 2.4, marginBottom: 8 },
   title: { fontFamily: FONT.heavy, color: '#EEF3F7', fontSize: 28, lineHeight: 32, marginBottom: 10 },
   subtitle: { fontFamily: FONT.body, color: '#8DA0B3', fontSize: 15, lineHeight: 22, marginBottom: 16 },

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { SESSIONS } from '../../../lib/mock/training';
+import { useSessions } from '../../../lib/hooks/use-sqlite-training';
 
 const FONT = {
   mono: Platform.OS === 'ios' ? 'Menlo-Regular' : 'monospace',
@@ -12,6 +12,8 @@ const FONT = {
 } as const;
 
 export default function HistoryScreen() {
+  const { rows: sessions, loading, error } = useSessions();
+
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
@@ -27,13 +29,16 @@ export default function HistoryScreen() {
           <SummaryCard label="Trend" value="AoA besser" />
         </View>
 
-        {SESSIONS.map((session) => (
+        {loading && <Text style={s.infoText}>Lade Sessions…</Text>}
+        {error != null && <Text style={s.errorText}>{error}</Text>}
+
+        {sessions.map((session) => (
           <Pressable key={session.id} style={s.sessionCard} onPress={() => router.push(`/history/${session.id}`)}>
             <Text style={s.sessionDate}>{session.date}</Text>
             <View style={s.sessionBody}>
               <Text style={s.sessionTitle}>{session.title}</Text>
-              <Text style={s.sessionMeta}>{session.shotsLabel}</Text>
-              <Text style={s.sessionCarry}>{session.carryLabel}</Text>
+              <Text style={s.sessionMeta}>{session.shots_label}</Text>
+              <Text style={s.sessionCarry}>{session.carry_label}</Text>
             </View>
           </Pressable>
         ))}
@@ -85,6 +90,8 @@ const s = StyleSheet.create({
     borderRadius: 18,
     padding: 12,
   },
+  infoText: { fontFamily: FONT.body, color: '#8DA0B3', fontSize: 14, marginBottom: 12 },
+  errorText: { fontFamily: FONT.body, color: '#DE6E63', fontSize: 14, marginBottom: 12 },
   summaryLabel: { fontFamily: FONT.body, color: '#8DA0B3', fontSize: 11, marginBottom: 4 },
   summaryValue: { fontFamily: FONT.demi, color: '#EEF3F7', fontSize: 16 },
   sessionCard: {
