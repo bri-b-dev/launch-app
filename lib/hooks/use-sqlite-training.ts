@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
+import type { ShotData } from '../types/shot';
 
 export interface DbClub {
   id: string;
@@ -71,11 +72,86 @@ export interface DbShotDetail extends DbShot {
   club_target: string;
 }
 
+interface TrainingDataContextValue {
+  revision: number;
+  bumpRevision: () => void;
+}
+
+const TrainingDataContext = createContext<TrainingDataContextValue | null>(null);
+
 function createId(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function formatSessionDate(date: Date): string {
+  const formatter = new Intl.DateTimeFormat('de-DE', {
+    day: '2-digit',
+    month: 'short',
+  });
+  const parts = formatter.formatToParts(date);
+  const day = parts.find((part) => part.type === 'day')?.value ?? '00';
+  const month = parts.find((part) => part.type === 'month')?.value ?? '';
+  return `${day} ${month.charAt(0).toUpperCase()}${month.slice(1)}`;
+}
+
+function formatCarryLabel(avgCarry: number | null): string {
+  if (avgCarry == null || Number.isNaN(avgCarry)) {
+    return 'Ø —';
+  }
+  return `Ø ${Math.round(avgCarry)}y`;
+}
+
+function classifyShot(shot: ShotData): Pick<DbShot, 'shape' | 'quality' | 'note' | 'accent'> {
+  if (shot.spinAxis < -3) {
+    return {
+      shape: 'Draw',
+      quality: Math.abs(shot.spinAxis) < 10 ? 'Stabil' : 'Überzogen',
+      note: `Spin Axis ${shot.spinAxis.toFixed(1)}°, Carry ${shot.carryDistanceYards.toFixed(0)}y.`,
+      accent: Math.abs(shot.spinAxis) < 10 ? 'blue' : 'orange',
+    };
+  }
+  if (shot.spinAxis > 3) {
+    return {
+      shape: 'Fade',
+      quality: Math.abs(shot.spinAxis) < 10 ? 'Stabil' : 'Offen',
+      note: `Spin Axis +${shot.spinAxis.toFixed(1)}°, Carry ${shot.carryDistanceYards.toFixed(0)}y.`,
+      accent: 'orange',
+    };
+  }
+  return {
+    shape: 'Straight',
+    quality: 'Neutral',
+    note: `Start neutral, Carry ${shot.carryDistanceYards.toFixed(0)}y.`,
+    accent: 'green',
+  };
+}
+
+function useTrainingDataContext() {
+  const context = useContext(TrainingDataContext);
+  if (context == null) {
+    throw new Error('use-sqlite-training hooks must be used inside TrainingDataProvider');
+  }
+  return context;
+}
+
+export function TrainingDataProvider({ children }: Readonly<{ children: React.ReactNode }>) {
+  const [revision, setRevision] = useState(0);
+
+  const value = useMemo(
+    () => ({
+      revision,
+      bumpRevision: () => {
+        setRevision((current) => current + 1);
+      },
+    }),
+    [revision],
+  );
+
+  return React.createElement(TrainingDataContext.Provider, { value }, children);
+}
+
 function useAsyncRows<T>(queryKey: string, load: () => Promise<T[]>) {
+  const { revision } = useTrainingDataContext();
   const [rows, setRows] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,12 +181,13 @@ function useAsyncRows<T>(queryKey: string, load: () => Promise<T[]>) {
     return () => {
       active = false;
     };
-  }, [queryKey]);
+  }, [queryKey, revision]);
 
   return { rows, loading, error };
 }
 
 function useAsyncValue<T>(queryKey: string, load: () => Promise<T | null>) {
+  const { revision } = useTrainingDataContext();
   const [value, setValue] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -140,7 +217,7 @@ function useAsyncValue<T>(queryKey: string, load: () => Promise<T | null>) {
     return () => {
       active = false;
     };
-  }, [queryKey]);
+  }, [queryKey, revision]);
 
   return { value, loading, error };
 }
@@ -185,7 +262,7 @@ export function useClubShots(clubId: string | null) {
 export function useSessions() {
   const db = useSQLiteContext();
   return useAsyncRows<DbSession>('sessions', () =>
-    db.getAllAsync<DbSession>('SELECT * FROM sessions ORDER BY date DESC'),
+    db.getAllAsync<DbSession>('SELECT * FROM sessions ORDER BY rowid DESC'),
   );
 }
 
@@ -258,11 +335,7 @@ export function useShotDetail(shotId: string | null) {
 
 export function useClubAdmin() {
   const db = useSQLiteContext();
-  const [revision, setRevision] = useState(0);
-
-  const refresh = useCallback(() => {
-    setRevision((current) => current + 1);
-  }, []);
+  const { revision, bumpRevision } = useTrainingDataContext();
 
   const clubsState = useAsyncRows<DbClub>(`club-admin-${revision}`, () =>
     db.getAllAsync<DbClub>(
@@ -315,9 +388,9 @@ export function useClubAdmin() {
       }
     });
 
-    refresh();
+    bumpRevision();
     return clubId;
-  }, [db, refresh]);
+  }, [bumpRevision, db]);
 
   const updateClub = useCallback(async (clubId: string, draft: ClubDraft) => {
     await db.runAsync(
@@ -333,13 +406,13 @@ export function useClubAdmin() {
       draft.name.trim(),
       clubId,
     );
-    refresh();
-  }, [db, refresh]);
+    bumpRevision();
+  }, [bumpRevision, db]);
 
   const setClubArchived = useCallback(async (clubId: string, archived: boolean) => {
     await db.runAsync('UPDATE clubs SET archived = ? WHERE id = ?', archived ? 1 : 0, clubId);
-    refresh();
-  }, [db, refresh]);
+    bumpRevision();
+  }, [bumpRevision, db]);
 
   const deleteClub = useCallback(async (clubId: string) => {
     await db.withTransactionAsync(async () => {
@@ -348,8 +421,8 @@ export function useClubAdmin() {
       await db.runAsync('DELETE FROM shots WHERE club_id = ?', clubId);
       await db.runAsync('DELETE FROM clubs WHERE id = ?', clubId);
     });
-    refresh();
-  }, [db, refresh]);
+    bumpRevision();
+  }, [bumpRevision, db]);
 
   const updateMargin = useCallback(async (
     marginId: string,
@@ -363,8 +436,8 @@ export function useClubAdmin() {
       values.range_value.trim(),
       marginId,
     );
-    refresh();
-  }, [db, refresh]);
+    bumpRevision();
+  }, [bumpRevision, db]);
 
   return {
     rows: clubsState.rows,
@@ -376,4 +449,124 @@ export function useClubAdmin() {
     deleteClub,
     updateMargin,
   };
+}
+
+export function useShotCapture() {
+  const db = useSQLiteContext();
+  const { bumpRevision } = useTrainingDataContext();
+
+  const persistShot = useCallback(async (clubId: string, shot: ShotData) => {
+    const club = await db.getFirstAsync<DbClub>('SELECT * FROM clubs WHERE id = ?', clubId);
+    if (club == null) {
+      throw new Error(`Club ${clubId} nicht gefunden.`);
+    }
+
+    const shotId = createId('shot');
+    const classified = classifyShot(shot);
+    const sessionKey = new Date().toISOString().slice(0, 10);
+    const sessionId = `session-${sessionKey}-${clubId}`;
+    const sessionDate = formatSessionDate(new Date());
+
+    await db.withTransactionAsync(async () => {
+      await db.runAsync(
+        `INSERT INTO shots (id, club_id, carry, shape, quality, note, ball_speed, club_speed, vla, spin, accent)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        shotId,
+        clubId,
+        shot.carryDistanceYards.toFixed(0),
+        classified.shape,
+        classified.quality,
+        classified.note,
+        shot.ballSpeedMph.toFixed(1),
+        shot.clubSpeedMph?.toFixed(1) ?? '—',
+        shot.verticalLaunchAngle.toFixed(1),
+        shot.totalSpin.toFixed(0),
+        classified.accent,
+      );
+
+      const stats = await db.getFirstAsync<{ count: number; avgCarry: number | null }>(
+        `SELECT COUNT(*) as count, AVG(CAST(carry AS REAL)) as avgCarry
+         FROM shots
+         WHERE club_id = ?`,
+        clubId,
+      );
+
+      const count = stats?.count ?? 0;
+      const avgCarry = stats?.avgCarry ?? null;
+      const hitRate = count === 0
+        ? '—'
+        : `${Math.round(
+            ((await db.getFirstAsync<{ success: number }>(
+              `SELECT COUNT(*) as success FROM shots
+               WHERE club_id = ? AND accent != 'orange'`,
+              clubId,
+            ))?.success ?? 0) / count * 100,
+          )}%`;
+
+      await db.runAsync(
+        `UPDATE clubs
+         SET shot_count = ?, avg_carry = ?, hit_rate = ?, target = ?, bias = ?
+         WHERE id = ?`,
+        String(count),
+        avgCarry == null ? '—' : `${Math.round(avgCarry)}y`,
+        hitRate,
+        `${classified.shape} Bias aktiv`,
+        classified.shape,
+        clubId,
+      );
+
+      const sessionExisting = await db.getFirstAsync<{ id: string }>(
+        'SELECT id FROM sessions WHERE id = ?',
+        sessionId,
+      );
+
+      if (sessionExisting == null) {
+        await db.runAsync(
+          `INSERT INTO sessions (id, date, title, shots_label, carry_label, focus, summary)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          sessionId,
+          sessionDate,
+          `${club.name} Live Block`,
+          `${count} Schläge`,
+          formatCarryLabel(avgCarry),
+          'Automatisch aus aktiver Mevo-Session erzeugt.',
+          `Letzter Schlag: ${classified.shape}, ${shot.carryDistanceYards.toFixed(0)}y Carry.`,
+        );
+        await db.runAsync(
+          'INSERT OR IGNORE INTO session_clubs (session_id, club_id) VALUES (?, ?)',
+          sessionId,
+          clubId,
+        );
+      } else {
+        await db.runAsync(
+          `UPDATE sessions
+           SET shots_label = ?, carry_label = ?, summary = ?
+           WHERE id = ?`,
+          `${count} Schläge`,
+          formatCarryLabel(avgCarry),
+          `Letzter Schlag: ${classified.shape}, ${shot.carryDistanceYards.toFixed(0)}y Carry.`,
+          sessionId,
+        );
+      }
+
+      const marginUpdates = [
+        { label: 'AoA', value: shot.angleOfAttack != null ? `${shot.angleOfAttack.toFixed(1)}°` : '—' },
+        { label: 'Spin Axis', value: `${shot.spinAxis.toFixed(1)}°` },
+        { label: 'Face to Target', value: shot.faceToTarget != null ? `${shot.faceToTarget.toFixed(1)}°` : '—' },
+      ];
+
+      for (const margin of marginUpdates) {
+        await db.runAsync(
+          'UPDATE margins SET current_value = ? WHERE club_id = ? AND label = ?',
+          margin.value,
+          clubId,
+          margin.label,
+        );
+      }
+    });
+
+    bumpRevision();
+  }, [bumpRevision, db]);
+
+  return { persistShot };
 }

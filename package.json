@@ -10,7 +10,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@bri-b-dev/gspro-connect-mevoplus": "github:bri-b-dev/gspro-connect-mevoplus",
+    "@bri-b-dev/gspro-connect-mevoplus": "github:bri-b-dev/gspro-connect-mevoplus#main",
     "@expo/metro-runtime": "~6.1.2",
     "@shopify/react-native-skia": "2.2.12",
     "@supabase/supabase-js": "^2.103.0",

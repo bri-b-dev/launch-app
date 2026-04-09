@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Pressable, Platform } from 'react-n
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useTrainingState } from '../../../lib/hooks/use-training-state';
-import { useClubShots, useClubs, useMargins } from '../../../lib/hooks/use-sqlite-training';
+import { type DbMargin, useClubShots, useClubs, useMargins } from '../../../lib/hooks/use-sqlite-training';
 
 const C = {
   bg: '#071018',
@@ -30,6 +30,60 @@ const FONT = {
 
 const MODE_OPTIONS = ['Full Swing', 'Approach', 'Wedge'];
 
+type MarginStatusTone = 'good' | 'near' | 'bad' | 'idle';
+
+function extractNumbers(input: string): number[] {
+  const matches = input.match(/-?\d+(?:[.,]\d+)?/g) ?? [];
+  return matches
+    .map((value) => Number(value.replace(',', '.')))
+    .filter((value) => Number.isFinite(value));
+}
+
+function evaluateMargin(target: DbMargin): {
+  tone: MarginStatusTone;
+  label: string;
+  detail: string;
+} {
+  const current = extractNumbers(target.current_value)[0];
+  const range = extractNumbers(target.range_value);
+
+  if (current == null || range.length < 2) {
+    return {
+      tone: 'idle',
+      label: 'Offen',
+      detail: 'Noch keine bewertbare Zielprüfung.',
+    };
+  }
+
+  const lower = Math.min(range[0], range[1]);
+  const upper = Math.max(range[0], range[1]);
+
+  if (current >= lower && current <= upper) {
+    return {
+      tone: 'good',
+      label: 'Im Korridor',
+      detail: `Aktuell ${target.current_value} liegt im Zielbereich.`,
+    };
+  }
+
+  const distance = current < lower ? lower - current : current - upper;
+  const nearThreshold = Math.max((upper - lower) * 0.25, 0.5);
+
+  if (distance <= nearThreshold) {
+    return {
+      tone: 'near',
+      label: 'Knapp daneben',
+      detail: `Abweichung ${distance.toFixed(1)} zur Zielgrenze.`,
+    };
+  }
+
+  return {
+    tone: 'bad',
+    label: 'Außerhalb',
+    detail: `Abweichung ${distance.toFixed(1)} zum Korridor.`,
+  };
+}
+
 export default function SessionScreen() {
   const [selectedMode] = useState('Full Swing');
   const { activeClubId, setActiveClubId } = useTrainingState();
@@ -38,6 +92,20 @@ export default function SessionScreen() {
   const { rows: targets, loading: marginsLoading } = useMargins(club?.id ?? null);
   const { rows: shots, loading: shotsLoading } = useClubShots(club?.id ?? null);
   const leadShot = shots[0];
+  const marginSummary = targets.reduce(
+    (summary, target) => {
+      const result = evaluateMargin(target);
+      if (result.tone === 'good') {
+        summary.good += 1;
+      } else if (result.tone === 'near') {
+        summary.near += 1;
+      } else if (result.tone === 'bad') {
+        summary.bad += 1;
+      }
+      return summary;
+    },
+    { good: 0, near: 0, bad: 0 },
+  );
 
   if (clubsError != null) {
     return (
@@ -132,19 +200,12 @@ export default function SessionScreen() {
         <View style={s.section}>
           <View style={s.sectionHeader}>
             <Text style={s.sectionEyebrow}>Zielkorridore</Text>
-            <Text style={s.sectionLink}>Margins</Text>
+            <Text style={s.sectionLink}>
+              {marginSummary.good} ok · {marginSummary.near} nah · {marginSummary.bad} offen
+            </Text>
           </View>
           {marginsLoading ? <Text style={s.infoText}>Margins werden geladen…</Text> : targets.map((target) => (
-            <View key={target.label} style={s.targetCard}>
-              <View style={[s.targetAccent, { backgroundColor: target.accent === 'green' ? C.green : target.accent === 'blue' ? C.blue : target.accent === 'gold' ? C.gold : C.orange }]} />
-              <View style={s.targetBody}>
-                <View style={s.targetTop}>
-                  <Text style={s.targetLabel}>{target.label}</Text>
-                  <Text style={[s.targetCurrent, { color: target.accent === 'green' ? C.green : target.accent === 'blue' ? C.blue : target.accent === 'gold' ? C.gold : C.orange }]}>{target.current_value}</Text>
-                </View>
-                <Text style={s.targetRange}>{target.range_value}</Text>
-              </View>
-            </View>
+            <MarginStatusCard key={target.id} target={target} />
           ))}
         </View>
 
@@ -181,6 +242,33 @@ export default function SessionScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function MarginStatusCard({ target }: Readonly<{ target: DbMargin }>) {
+  const accentColor =
+    target.accent === 'green' ? C.green : target.accent === 'blue' ? C.blue : target.accent === 'gold' ? C.gold : C.orange;
+  const result = evaluateMargin(target);
+  const statusColor =
+    result.tone === 'good' ? C.green : result.tone === 'near' ? C.gold : result.tone === 'bad' ? C.red : C.textSecondary;
+
+  return (
+    <View style={s.targetCard}>
+      <View style={[s.targetAccent, { backgroundColor: accentColor }]} />
+      <View style={s.targetBody}>
+        <View style={s.targetTop}>
+          <Text style={s.targetLabel}>{target.label}</Text>
+          <View style={[s.targetStatusPill, { borderColor: `${statusColor}55`, backgroundColor: `${statusColor}18` }]}>
+            <Text style={[s.targetStatusText, { color: statusColor }]}>{result.label}</Text>
+          </View>
+        </View>
+        <View style={s.targetMetricRow}>
+          <Text style={[s.targetCurrent, { color: accentColor }]}>{target.current_value}</Text>
+          <Text style={s.targetRange}>{target.range_value}</Text>
+        </View>
+        <Text style={s.targetNote}>{result.detail}</Text>
+      </View>
+    </View>
   );
 }
 
@@ -493,12 +581,39 @@ const s = StyleSheet.create({
   },
   targetCurrent: {
     fontFamily: FONT.demi,
-    fontSize: 14,
+    fontSize: 16,
   },
   targetRange: {
     fontFamily: FONT.body,
+    color: C.textSecondary,
+    fontSize: 13,
+    flex: 1,
+    textAlign: 'right',
+  },
+  targetMetricRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    gap: 10,
+    marginBottom: 6,
+  },
+  targetNote: {
+    fontFamily: FONT.body,
     color: C.text,
-    fontSize: 15,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  targetStatusPill: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  targetStatusText: {
+    fontFamily: FONT.mono,
+    fontSize: 10,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   rail: {
     gap: 10,

@@ -2,7 +2,7 @@
 
 Android Golf-Trainings-App. Direktverbindung FlightScope Mevo+ via TCP. Schlagerfassung, Analyse, Video.
 
-**Stack:** Expo SDK 55 (Bare), React Native 0.84, Expo Router, TypeScript strict, expo-sqlite, Supabase, victory-native, react-native-skia, expo-video
+**Stack:** Expo SDK 54 (Bare), React Native 0.84, Expo Router, TypeScript strict, expo-sqlite, Supabase, victory-native, react-native-skia, expo-video
 
 ---
 
@@ -15,6 +15,7 @@ Android Golf-Trainings-App. Direktverbindung FlightScope Mevo+ via TCP. Schlager
 - Transaktionen für zusammengehörige Writes (Shot + Video-Pfad)
 - Einheiten intern: **mph**, **yards**, **Grad** — Konvertierung nur in `lib/utils/units.ts`
 - Felder heißen exakt wie in `ShotData` (keine Umbenennung, UI-Anzeige deutsch)
+- Bei Vorschlägen, was die nächsten Schritte angeht, orientiere dich an der aktuellen Phase in docs/roadmap.html
 
 ---
 

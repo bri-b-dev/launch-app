@@ -15,10 +15,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import type { Href } from 'expo-router';
-import { useMevo } from '@bri-b-dev/gspro-connect-mevoplus';
 import type { ConnectionState } from '../../lib/types/shot';
 import { useTrainingState } from '../../lib/hooks/use-training-state';
 import { useClubs, useClubShots, useMargins } from '../../lib/hooks/use-sqlite-training';
+import { useMevoSession } from '../../lib/hooks/use-mevo-session';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -108,7 +108,7 @@ export default function DashboardScreen() {
     connect,
     arm,
     disconnect,
-  } = useMevo();
+  } = useMevoSession();
   const { activeClubId } = useTrainingState();
   const { rows: clubs } = useClubs();
   const activeClub = clubs.find((club) => club.id === activeClubId) ?? clubs[0] ?? null;
