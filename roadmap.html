@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Launch Monitor App — Roadmap</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0a0a0f;
+    --surface:   #12121a;
+    --border:    #1e1e2e;
+    --text:      #e8e8f0;
+    --muted:     #6b6b80;
+    --mvp:       #4ade80;
+    --mvp-dim:   #166534;
+    --v2:        #facc15;
+    --v2-dim:    #713f12;
+    --v3:        #f97316;
+    --v3-dim:    #7c2d12;
+    --later:     #6b6b80;
+    --later-dim: #27272a;
+    --accent:    #818cf8;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+
+  /* ── Header ── */
+  header {
+    max-width: 860px;
+    margin: 0 auto 3rem;
+  }
+  .eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  h1 {
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+  }
+  h1 span { color: var(--accent); }
+  .subtitle {
+    font-size: 0.95rem;
+    color: var(--muted);
+    max-width: 520px;
+    line-height: 1.7;
+  }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.5rem;
+    max-width: 860px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .legend-item:hover { color: var(--text); }
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-mvp   { background: var(--mvp); }
+  .dot-v2    { background: var(--v2); }
+  .dot-v3    { background: var(--v3); }
+  .dot-later { background: var(--later); }
+
+  /* ── Phases ── */
+  .phases {
+    max-width: 860px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  /* ── Phase Block ── */
+  .phase {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .phase:hover { border-color: #2e2e42; }
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem 1.4rem;
+    cursor: pointer;
+    background: var(--surface);
+    user-select: none;
+  }
+  .phase-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .badge-mvp   { background: var(--mvp-dim);   color: var(--mvp); }
+  .badge-v2    { background: var(--v2-dim);     color: var(--v2); }
+  .badge-v3    { background: var(--v3-dim);     color: var(--v3); }
+  .badge-later { background: var(--later-dim);  color: var(--later); }
+
+  .phase-title {
+    font-size: 1rem;
+    font-weight: 700;
+    flex: 1;
+  }
+  .phase-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .phase-chevron {
+    color: var(--muted);
+    font-size: 0.8rem;
+    transition: transform 0.25s;
+    flex-shrink: 0;
+  }
+  .phase.open .phase-chevron { transform: rotate(180deg); }
+
+  .phase-body {
+    display: none;
+    padding: 0 1.4rem 1.4rem;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+  .phase.open .phase-body { display: block; }
+
+  .phase-desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.7;
+    padding: 1rem 0 1.2rem;
+  }
+
+  /* ── Feature Cards ── */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .feature {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .feature:hover {
+    border-color: #3a3a52;
+    transform: translateY(-1px);
+  }
+
+  .feature-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    margin-bottom: 0.5rem;
+  }
+  .feature-icon {
+    font-size: 1rem;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .feature-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .feature-desc {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.6;
+    padding-left: 1.6rem;
+  }
+
+  .feature-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.7rem;
+    padding-left: 1.6rem;
+  }
+  .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 3px;
+    background: var(--border);
+    color: var(--muted);
+  }
+
+  /* ── Dependency note ── */
+  .dep-note {
+    margin-top: 1.2rem;
+    padding: 0.75rem 1rem;
+    border-left: 2px solid var(--accent);
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .dep-note strong { color: var(--accent); font-weight: 600; }
+
+  /* ── Summary bar ── */
+  .summary {
+    max-width: 860px;
+    margin: 2rem auto 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+  }
+  .summary-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+  }
+  .summary-num {
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+  .summary-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Product Roadmap · 2026</div>
+  <h1>Launch Monitor App<br><span>für Mevo+</span></h1>
+  <p class="subtitle">Fokussierte Eigenentwicklung — losgelöst von der All-in-One-App. Jede Phase baut auf der vorherigen auf.</p>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot dot-mvp"></div>MVP — muss sein</div>
+  <div class="legend-item"><div class="legend-dot dot-v2"></div>v2 — wichtig, nicht sofort</div>
+  <div class="legend-item"><div class="legend-dot dot-v3"></div>v3 — nice to have</div>
+  <div class="legend-item"><div class="legend-dot dot-later"></div>Later / optional</div>
+</div>
+
+<div class="phases">
+
+  <!-- Phase 1 -->
+  <div class="phase open" id="p1">
+    <div class="phase-header" onclick="toggle('p1')">
+      <div class="phase-badge badge-mvp">Phase 1 · MVP</div>
+      <div class="phase-title">Gerät verbinden &amp; Schläge erfassen</div>
+      <div class="phase-meta">~3–4 Wochen</div>
+      <div class="phase-chevron">▼</div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-desc">
+        Das Fundament. Kein Feature ist sinnvoll ohne zuverlässige Verbindung und Schlagerfassung.
+        Alles andere baut hierauf auf.
+      </div>
+      <div class="features">
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">📡</div>
+            <div class="feature-name">Mevo+ Verbindung</div>
+          </div>
+          <div class="feature-desc">WiFi-Verbindung, Arm/Disarm, Heartbeat — die Library steht bereits.</div>
+          <div class="feature-tags"><span class="tag">TCP :5100</span><span class="tag">library fertig</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">🎯</div>
+            <div class="feature-name">Schlagerfassung</div>
+          </div>
+          <div class="feature-desc">Shot-Event empfangen, alle Metriken parsen (Ball + Club + FIL). Estimated-Spin-Flag anzeigen.</div>
+          <div class="feature-tags"><span class="tag">protocol.ts</span><span class="tag">ShotData</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">📊</div>
+            <div class="feature-name">Live-Dashboard</div>
+          </div>
+          <div class="feature-desc">Letzter Schlag prominent, alle Metriken strukturiert. Einfache Session-Ansicht mit Schlaghistorie.</div>
+          <div class="feature-tags"><span class="tag">React Native</span><span class="tag">useMevo</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">🗄️</div>
+            <div class="feature-name">Lokale Datenbank</div>
+          </div>
+          <div class="feature-desc">SQLite via expo-sqlite. Sessions, Schläge, Klub-Zuordnung. Schläge überleben App-Neustart.</div>
+          <div class="feature-tags"><span class="tag">expo-sqlite</span><span class="tag">offline-first</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">🔐</div>
+            <div class="feature-name">Authentifizierung</div>
+          </div>
+          <div class="feature-desc">Supabase Auth. Email/Passwort reicht für MVP. Daten werden userId zugeordnet.</div>
+          <div class="feature-tags"><span class="tag">Supabase</span><span class="tag">bereits installiert</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">🏌️</div>
+            <div class="feature-name">Equipment-Grundstruktur</div>
+          </div>
+          <div class="feature-desc">Schlägerliste (Typ, Loft, Name). Jedem Schlag wird ein Schläger zugeordnet. Mevo+ als fixer LM.</div>
+          <div class="feature-tags"><span class="tag">CRUD</span><span class="tag">nur Mevo+</span></div>
+        </div>
+
+      </div>
+      <div class="dep-note">
+        <strong>Ergebnis:</strong> Du kannst eine Session starten, Schläge landen in der DB, du siehst die Daten live. Alles andere ist Oberfläche.
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 2 -->
+  <div class="phase" id="p2">
+    <div class="phase-header" onclick="toggle('p2')">
+      <div class="phase-badge badge-mvp">Phase 2 · MVP</div>
+      <div class="phase-title">Analyse &amp; Zielbereiche</div>
+      <div class="phase-meta">~3–4 Wochen</div>
+      <div class="phase-chevron">▼</div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-desc">
+        Das Herzstück der App. Hier entsteht der echte Mehrwert gegenüber der FS Golf App —
+        deine eigenen Zielbereiche, dein eigenes Feedback-System.
+      </div>
+      <div class="features">
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">🎯</div>
+            <div class="feature-name">Zielbereiche (Margins)</div>
+          </div>
+          <div class="feature-desc">Pro Klub und Metrik Min/Max definieren. Visuelles Feedback: grün/rot. Face-to-Path 2°–4° ist der klassische Use Case.</div>
+          <div class="feature-tags"><span class="tag">per Schläger</span><span class="tag">draw-Bias</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">💥</div>
+            <div class="feature-name">Face Impact View</div>
+          </div>
+          <div class="feature-desc">Schlägerface als Grafik, Treffpunkt als Punkt. Heatmap über mehrere Schläge. FIL Add-on erforderlich.</div>
+          <div class="feature-tags"><span class="tag">FIL Add-on</span><span class="tag">SVG</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">📈</div>
+            <div class="feature-name">Session-Statistiken</div>
+          </div>
+          <div class="feature-desc">Ø-Werte, Standardabweichung, Trefferquote Zielbereich, Draw-Quote. Pro Session und pro Schläger.</div>
+          <div class="feature-tags"><span class="tag">useShotStats</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">📍</div>
+            <div class="feature-name">Shot Dispersion</div>
+          </div>
+          <div class="feature-desc">Landepunkte als Streudiagramm auf einer Fairway/Green-Grafik. Visuell sehr eingängig.</div>
+          <div class="feature-tags"><span class="tag">SVG</span><span class="tag">HLA + Carry</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">📅</div>
+            <div class="feature-name">Session-Verlauf</div>
+          </div>
+          <div class="feature-desc">Alle Sessions chronologisch. Pro Session: Datum, Schläger, Schlaganzahl, Ø-Carry. Detailansicht pro Session.</div>
+          <div class="feature-tags"><span class="tag">History</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">📉</div>
+            <div class="feature-name">Trend-Charts</div>
+          </div>
+          <div class="feature-desc">Entwicklung einzelner Metriken über Zeit (z.B. AoA der letzten 10 Sessions). Zeigt ob Swing-Arbeit wirkt.</div>
+          <div class="feature-tags"><span class="tag">victory-native</span><span class="tag">bereits installiert</span></div>
+        </div>
+
+      </div>
+      <div class="dep-note">
+        <strong>Ergebnis:</strong> Die App ist jetzt nützlicher als die FS Golf App für gezieltes Training — eigene Targets, eigene Analyse, alles ohne Cloud-Zwang.
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 3 -->
+  <div class="phase" id="p3">
+    <div class="phase-header" onclick="toggle('p3')">
+      <div class="phase-badge badge-v2">Phase 3 · v2</div>
+      <div class="phase-title">Video-Integration</div>
+      <div class="phase-meta">~4–6 Wochen</div>
+      <div class="phase-chevron">▼</div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-desc">
+        Komplex, aber hoher Wert — besonders für die EE-Diagnose. Erfordert sorgfältige
+        Architektur wegen Circular-Buffer und Sync-Logik.
+      </div>
+      <div class="features">
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">📷</div>
+            <div class="feature-name">Videoaufnahme + Sync</div>
+          </div>
+          <div class="feature-desc">Kontinuierliche Aufnahme, Shot-Event als Trigger, Clip aus Buffer schneiden (2s pre / 3s post impact). Post-trigger als MVP.</div>
+          <div class="feature-tags"><span class="tag">vision-camera</span><span class="tag">circular buffer</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">🎬</div>
+            <div class="feature-name">Video-Player mit Daten</div>
+          </div>
+          <div class="feature-desc">Clip abspielen, daneben die Metriken des Schlags. Slow-Motion. Frame-genaues Scrubbing.</div>
+          <div class="feature-tags"><span class="tag">expo-video</span><span class="tag">bereits installiert</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">✏️</div>
+            <div class="feature-name">Video-Annotationen</div>
+          </div>
+          <div class="feature-desc">Linien und Punkte einzeichnen: Schwungbahn, Kopfposition, Hüftlinie. Auf Frame einfrieren, dann zeichnen.</div>
+          <div class="feature-tags"><span class="tag">Skia / SVG overlay</span><span class="tag">react-native-skia</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">📁</div>
+            <div class="feature-name">Video-Speicherung</div>
+          </div>
+          <div class="feature-desc">Clips lokal speichern (expo-file-system), optional zu Supabase Storage hochladen. DB-Verknüpfung zum Schlag.</div>
+          <div class="feature-tags"><span class="tag">expo-file-system</span><span class="tag">Supabase Storage</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">🔀</div>
+            <div class="feature-name">Video-Vergleich</div>
+          </div>
+          <div class="feature-desc">Zwei Schläge nebeneinander abspielen. Ideal um Swing-Änderungen sichtbar zu machen.</div>
+          <div class="feature-tags"><span class="tag">v2 detail</span></div>
+        </div>
+
+      </div>
+      <div class="dep-note">
+        <strong>Hinweis:</strong> Post-trigger (nur nach Impact) zuerst implementieren — das ist in 1–2 Tagen machbar. Circular Buffer (Pre-Impact) ist ~1 Woche extra Arbeit, lohnt sich aber für DTL-Analyse.
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 4 -->
+  <div class="phase" id="p4">
+    <div class="phase-header" onclick="toggle('p4')">
+      <div class="phase-badge badge-v2">Phase 4 · v2</div>
+      <div class="phase-title">Cloud &amp; Sync</div>
+      <div class="phase-meta">~2–3 Wochen</div>
+      <div class="phase-chevron">▼</div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-desc">
+        Sobald die App stabil läuft und Daten lokal gespeichert sind, können sie optional in die Cloud.
+        Supabase ist bereits im Projekt — das ist nur Verdrahtung.
+      </div>
+      <div class="features">
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">☁️</div>
+            <div class="feature-name">Supabase Sync</div>
+          </div>
+          <div class="feature-desc">Schlagdaten aus SQLite → Supabase hochladen wenn online. Offline-first bleibt erhalten.</div>
+          <div class="feature-tags"><span class="tag">Supabase</span><span class="tag">bereits installiert</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">📤</div>
+            <div class="feature-name">CSV-Export</div>
+          </div>
+          <div class="feature-desc">Session oder gesamte Schlaghistorie als CSV exportieren. Für externe Auswertung (Excel, R, etc.).</div>
+          <div class="feature-tags"><span class="tag">expo-sharing</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">📱</div>
+            <div class="feature-name">Multi-Device</div>
+          </div>
+          <div class="feature-desc">Daten auf iPad und iPhone synchron. Wichtig wenn Kamera auf einem, App auf anderem Gerät.</div>
+          <div class="feature-tags"><span class="tag">Supabase Realtime</span></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 5 -->
+  <div class="phase" id="p5">
+    <div class="phase-header" onclick="toggle('p5')">
+      <div class="phase-badge badge-v3">Phase 5 · v3</div>
+      <div class="phase-title">Erweiterte Analyse &amp; AI</div>
+      <div class="phase-meta">später</div>
+      <div class="phase-chevron">▼</div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-desc">
+        Features die den Unterschied machen wenn die Grundlagen perfekt sitzen.
+        Kein MVP-Kandidat, aber hoher strategischer Wert.
+      </div>
+      <div class="features">
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">🤖</div>
+            <div class="feature-name">AI Swing-Analyse</div>
+          </div>
+          <div class="feature-desc">Metriken + Video → automatische Diagnose (z.B. "AoA zu steil, korreliert mit hohem Spin"). Claude API.</div>
+          <div class="feature-tags"><span class="tag">Claude API</span><span class="tag">Anthropic</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">📊</div>
+            <div class="feature-name">D-Plane Visualisierung</div>
+          </div>
+          <div class="feature-desc">Face-to-Path, Ball-Startlinie und Kurve als 3D-Diagramm. Für Deep-Dive Ballflugtechnik.</div>
+          <div class="feature-tags"><span class="tag">Pro Package</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">🏆</div>
+            <div class="feature-name">Trainingsprogramme</div>
+          </div>
+          <div class="feature-desc">Strukturierte Übungseinheiten mit Zielen und Fortschritts-Tracking. Z.B. "EE-Korrektur: 4 Wochen".</div>
+          <div class="feature-tags"><span class="tag">gamification</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">👥</div>
+            <div class="feature-name">Coach-Ansicht</div>
+          </div>
+          <div class="feature-desc">Trainer-Account kann Schüler-Sessions sehen, Annotationen hinterlassen, Zielbereiche setzen.</div>
+          <div class="feature-tags"><span class="tag">Supabase RLS</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">🎙️</div>
+            <div class="feature-name">Voice-Notizen</div>
+          </div>
+          <div class="feature-desc">Gesprochene Notiz pro Schlag aufnehmen. "Swing-Thought war X" — für eigene Reflexion.</div>
+          <div class="feature-tags"><span class="tag">expo-audio</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">🔭</div>
+            <div class="feature-name">Weitere Launch Monitors</div>
+          </div>
+          <div class="feature-desc">Rapsodo MLM2Pro, Garmin R10. Gleiche App, anderer Protokoll-Adapter. Library-Architektur hilft hier.</div>
+          <div class="feature-tags"><span class="tag">MLM2Pro</span><span class="tag">R10</span></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 6 — Skip -->
+  <div class="phase" id="p6">
+    <div class="phase-header" onclick="toggle('p6')">
+      <div class="phase-badge badge-later">Bewusst ausgelassen</div>
+      <div class="phase-title">Was die App nicht braucht</div>
+      <div class="phase-meta">nicht geplant</div>
+      <div class="phase-chevron">▼</div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-desc">
+        Features die verlockend klingen aber den Scope sprengen oder keinen echten Mehrwert bieten.
+      </div>
+      <div class="features">
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">🗺️</div>
+            <div class="feature-name">Platzrundenmanagement</div>
+          </div>
+          <div class="feature-desc">Scorecard, GPS, Lochansicht. Gehört in eine andere App (z.B. GLFR). Fokus bleibt Range/Training.</div>
+          <div class="feature-tags"><span class="tag">out of scope</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">🎮</div>
+            <div class="feature-name">Simulator-Integration</div>
+          </div>
+          <div class="feature-desc">E6, GSPro etc. Das können andere besser. Direktverbindung zum Gerät ist der Fokus dieser App.</div>
+          <div class="feature-tags"><span class="tag">out of scope</span></div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">🌐</div>
+            <div class="feature-name">Web-App</div>
+          </div>
+          <div class="feature-desc">TCP direkt ist native-only. Eine Web-Ansicht für historische Daten via Supabase wäre möglich, aber kein Priority.</div>
+          <div class="feature-tags"><span class="tag">später vielleicht</span></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Summary -->
+<div class="summary">
+  <div class="summary-item">
+    <div class="summary-num" style="color: var(--mvp)">12</div>
+    <div class="summary-label">MVP Features</div>
+  </div>
+  <div class="summary-item">
+    <div class="summary-num" style="color: var(--v2)">8</div>
+    <div class="summary-label">v2 Features</div>
+  </div>
+  <div class="summary-item">
+    <div class="summary-num" style="color: var(--v3)">6</div>
+    <div class="summary-label">v3 / Later</div>
+  </div>
+  <div class="summary-item">
+    <div class="summary-num" style="color: var(--accent)">~10</div>
+    <div class="summary-label">Wochen bis MVP</div>
+  </div>
+</div>
+
+<script>
+  function toggle(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('open');
+  }
+</script>
+</body>
+</html>

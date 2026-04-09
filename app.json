@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Launch Monitor",
+    "slug": "launch-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "launchapp",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "dev.bri.launchapp"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      [
+        "expo-video",
+        {
+          "supportsBackgroundPlayback": false,
+          "supportsPictureInPicture": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "android": {
+      "package": "dev.bri.launchapp"
+    }
+  }
+}
