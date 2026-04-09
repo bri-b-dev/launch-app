@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Pressable,
+  Alert,
   StatusBar,
   Animated,
   Dimensions,
@@ -14,7 +15,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import type { Href } from 'expo-router';
-import type { ShotData, ConnectionStatus } from '../../lib/types/shot';
+import { useMevo } from '@bri-b-dev/gspro-connect-mevoplus';
+import type { ConnectionState } from '../../lib/types/shot';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -46,47 +48,119 @@ const C = {
 const FONT = {
   mono: Platform.OS === 'ios' ? 'Menlo-Regular' : 'monospace',
   body: Platform.OS === 'ios' ? 'AvenirNext-Regular' : 'sans-serif',
-  medium: Platform.OS === 'ios' ? 'AvenirNext-Medium' : 'sans-serif-medium',
   demi: Platform.OS === 'ios' ? 'AvenirNext-DemiBold' : 'sans-serif-medium',
-  heavy: Platform.OS === 'ios' ? 'AvenirNext-Heavy' : 'sans-serif-condensed',
 } as const;
 
+const CONNECTOR_SUPPORTED = Platform.OS !== 'web';
+
 // ---------------------------------------------------------------------------
-// Mock data — replace with useMevo / useShots hooks in Phase 1
+// Helpers
 // ---------------------------------------------------------------------------
 
-const MOCK_SHOT: ShotData = {
-  ballSpeedMph: 114.2,
-  verticalLaunchAngle: 14.3,
-  horizontalLaunchAngle: -1.8,
-  totalSpin: 4420,
-  spinAxis: -11.4,
-  carryDistanceYards: 178.5,
-  isEstimatedSpin: false,
-  hasClubData: true,
-  hasFaceImpact: true,
-  clubSpeedMph: 76.4,
-  angleOfAttack: -3.1,
-  clubPath: -2.4,
-  faceToTarget: -1.2,
-  dynamicLoft: 28.3,
-  spinLoft: 31.4,
-  faceImpactX: -2.1,
-  faceImpactY: 1.4,
+function axisToNorm(axis: number): number {
+  return Math.max(0, Math.min(1, (axis + 45) / 90));
+}
+
+const STATE_COLOR: Record<ConnectionState, string> = {
+  disconnected: C.danger,
+  connecting: C.textSecondary,
+  connected: C.success,
+  armed: C.warning,
 };
+
+const STATE_LABEL: Record<ConnectionState, string> = {
+  disconnected: 'GETRENNT',
+  connecting: 'VERBINDE…',
+  connected: 'VERBUNDEN',
+  armed: 'BEREIT',
+};
+
+const TRAINING_PRIORITIES = [
+  { label: 'Swing-Fokus', value: 'Early Extension', tone: 'gold' as const },
+  { label: 'Bias', value: 'Draw-orientiert', tone: 'draw' as const },
+  { label: 'Aktiver Klub', value: '7-Eisen', tone: 'teal' as const },
+];
+
+const TARGET_CORRIDORS = [
+  { metric: 'AoA', range: '-2.0° bis -5.0°', note: 'Tour-nah fuer Irons', accent: 'teal' as const },
+  { metric: 'Spin Axis', range: '-3.0° bis -12.0°', note: 'leichter Draw-Bias', accent: 'draw' as const },
+  { metric: 'Face to Target', range: '-1.5° bis +0.5°', note: 'Startlinie neutral halten', accent: 'gold' as const },
+];
+
+const ROADMAP_PREVIEW = [
+  { phase: 'Phase 1', title: 'Connect + Capture', body: 'Verbindung, Arm, Live-Metriken und Session-Grundlage.', badge: 'MVP' },
+  { phase: 'Phase 2', title: 'Targets + Analyse', body: 'Margins, Dispersion, Trends und Feedback auf Schlagebene.', badge: 'Next' },
+  { phase: 'Phase 3', title: 'Video Layer', body: 'Post-Impact-Clips, Annotationen und Vergleichsansichten.', badge: 'v2' },
+];
 
 // ---------------------------------------------------------------------------
 // Dashboard screen
 // ---------------------------------------------------------------------------
 
 export default function DashboardScreen() {
-  // Phase 1: replace with useMevo() and useShots() hooks
-  const [status] = useState<ConnectionStatus>('connected');
-  const [lastShot] = useState<ShotData | null>(MOCK_SHOT);
-  const [shotCount] = useState(12);
-  const [sessionClub] = useState('7-Eisen');
+  const {
+    state,
+    lastShot,
+    shotCount,
+    error,
+    connect,
+    arm,
+    disconnect,
+  } = useMevo();
 
-  // Connection dot pulse (active only when "armed")
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const handleActionError = useCallback((action: string, err: unknown) => {
+    const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+    console.error(`[Mevo] ${action} fehlgeschlagen:`, err);
+    setActionError(`${action} fehlgeschlagen: ${message}`);
+    Alert.alert('Mevo+ Fehler', `${action} fehlgeschlagen:\n${message}`);
+  }, []);
+
+  const safeConnect = useCallback(async () => {
+    if (!CONNECTOR_SUPPORTED) {
+      const message = 'Mevo+ Direktverbindung ist im Web nicht verfuegbar. Bitte in einer nativen Android- oder iOS-Development-Build auf einem Geraet testen.';
+      console.warn('[Mevo] ' + message);
+      setActionError(message);
+      Alert.alert('Nicht unterstuetzt', message);
+      return;
+    }
+    setActionError(null);
+    console.log('[Mevo] connect() gestartet');
+    try {
+      await connect();
+      console.log('[Mevo] connect() erfolgreich');
+    } catch (err) {
+      handleActionError('Verbinden', err);
+    }
+  }, [connect, handleActionError]);
+
+  const safeArm = useCallback(async () => {
+    setActionError(null);
+    console.log('[Mevo] arm() gestartet');
+    try {
+      await arm();
+      console.log('[Mevo] arm() erfolgreich');
+    } catch (err) {
+      handleActionError('Armen', err);
+    }
+  }, [arm, handleActionError]);
+
+  const safeDisconnect = useCallback(async () => {
+    setActionError(null);
+    console.log('[Mevo] disconnect() gestartet');
+    try {
+      await disconnect();
+      console.log('[Mevo] disconnect() erfolgreich');
+    } catch (err) {
+      handleActionError('Trennen', err);
+    }
+  }, [disconnect, handleActionError]);
+
+  // Session-Metadaten kommen in Phase 1 aus useSession()
+  const sessionClub = '7-Eisen';
+
+  // Connection dot pulse — only when armed
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   // Card reveal on new shot
@@ -104,14 +178,14 @@ export default function DashboardScreen() {
         Animated.timing(pulseAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
       ]),
     );
-    if (status === 'armed') {
+    if (state === 'armed') {
       loop.start();
     } else {
       loop.stop();
       pulseAnim.setValue(1);
     }
     return () => loop.stop();
-  }, [status]);
+  }, [state]);
 
   useEffect(() => {
     if (!lastShot) return;
@@ -125,8 +199,19 @@ export default function DashboardScreen() {
     }).start();
   }, [lastShot]);
 
-  const statusColor = { connected: C.success, disconnected: C.danger, armed: C.warning }[status];
-  const statusLabel = { connected: 'VERBUNDEN', disconnected: 'GETRENNT', armed: 'BEREIT' }[status];
+  useEffect(() => {
+    console.log('[Mevo] state:', state);
+  }, [state]);
+
+  useEffect(() => {
+    if (error != null) {
+      console.error('[Mevo] hook error:', error);
+    }
+  }, [error]);
+
+  const statusColor = STATE_COLOR[state];
+  const statusLabel = STATE_LABEL[state];
+  const bannerMessage = actionError ?? error;
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
@@ -136,8 +221,11 @@ export default function DashboardScreen() {
 
         {/* ── Header ────────────────────────────────────────────────── */}
         <View style={s.header}>
+          <ConnectButton state={state} onConnect={safeConnect} onArm={safeArm} onDisconnect={safeDisconnect} />
           <View style={s.statusRow}>
-            <Animated.View style={[s.statusDot, { backgroundColor: statusColor, opacity: status === 'armed' ? pulseAnim : 1 }]} />
+            <Animated.View
+              style={[s.statusDot, { backgroundColor: statusColor, opacity: state === 'armed' ? pulseAnim : 1 }]}
+            />
             <Text style={[s.statusText, { color: statusColor }]}>{statusLabel}</Text>
           </View>
           <View style={s.sessionMeta}>
@@ -146,8 +234,16 @@ export default function DashboardScreen() {
           </View>
         </View>
 
+        {/* ── Error banner ──────────────────────────────────────────── */}
+        {bannerMessage != null && <ErrorBanner message={bannerMessage} />}
+        {!CONNECTOR_SUPPORTED && (
+          <InfoBanner message="Web-Build erkannt. TCP zum Mevo+ funktioniert nur in einer nativen Android- oder iOS-Development-Build, nicht im Browser." />
+        )}
+
         {/* ── Hero ─────────────────────────────────────────────────── */}
-        {lastShot ? (
+        {lastShot == null ? (
+          <EmptyState state={state} onConnect={safeConnect} />
+        ) : (
           <Animated.View
             style={[
               s.heroCard,
@@ -157,7 +253,6 @@ export default function DashboardScreen() {
               },
             ]}
           >
-            {/* Decorative arc */}
             <View style={s.arcWrap} pointerEvents="none">
               <View style={s.arcRing} />
               <View style={s.arcPeak} />
@@ -169,12 +264,10 @@ export default function DashboardScreen() {
 
             <SpinAxisBar spinAxis={lastShot.spinAxis} animValue={spinAxisAnim} />
           </Animated.View>
-        ) : (
-          <EmptyState />
         )}
 
         {/* ── Metrics grid ────────────────────────────────────────── */}
-        {lastShot && (
+        {lastShot != null && (
           <Animated.View
             style={[
               s.metricsWrap,
@@ -184,26 +277,11 @@ export default function DashboardScreen() {
               },
             ]}
           >
-            <MetricCard
-              value={lastShot.ballSpeedMph.toFixed(1)}
-              unit="mph"
-              label="Ballgeschwindigkeit"
-              accent={C.gold}
-            />
+            <MetricCard value={lastShot.ballSpeedMph.toFixed(1)} unit="mph" label="Ballgeschwindigkeit" accent={C.gold} />
             {lastShot.hasClubData && lastShot.clubSpeedMph != null && (
-              <MetricCard
-                value={lastShot.clubSpeedMph.toFixed(1)}
-                unit="mph"
-                label="Schlägergeschwindigkeit"
-                accent={C.teal}
-              />
+              <MetricCard value={lastShot.clubSpeedMph.toFixed(1)} unit="mph" label="Schlägergeschwindigkeit" accent={C.teal} />
             )}
-            <MetricCard
-              value={`${lastShot.verticalLaunchAngle.toFixed(1)}°`}
-              unit=""
-              label="VLA"
-              accent={C.gold}
-            />
+            <MetricCard value={`${lastShot.verticalLaunchAngle.toFixed(1)}°`} unit="" label="VLA" accent={C.gold} />
             {lastShot.hasClubData && lastShot.angleOfAttack != null && (
               <MetricCard
                 value={`${lastShot.angleOfAttack > 0 ? '+' : ''}${lastShot.angleOfAttack.toFixed(1)}°`}
@@ -228,6 +306,33 @@ export default function DashboardScreen() {
           </Animated.View>
         )}
 
+        <View style={s.panel}>
+          <View style={s.panelHeader}>
+            <Text style={s.panelEyebrow}>Trainingskontext</Text>
+            <Text style={s.panelTitle}>Session als Control Surface</Text>
+          </View>
+          <View style={s.priorityRow}>
+            {TRAINING_PRIORITIES.map((item) => (
+              <PriorityChip key={item.label} {...item} />
+            ))}
+          </View>
+          <View style={s.corridorGrid}>
+            {TARGET_CORRIDORS.map((item) => (
+              <TargetCard key={item.metric} {...item} />
+            ))}
+          </View>
+        </View>
+
+        <View style={s.panel}>
+          <View style={s.panelHeader}>
+            <Text style={s.panelEyebrow}>Roadmap in der UI</Text>
+            <Text style={s.panelTitle}>Vom Messgeraet zur Trainingsoberflaeche</Text>
+          </View>
+          {ROADMAP_PREVIEW.map((item) => (
+            <RoadmapCard key={item.phase} {...item} />
+          ))}
+        </View>
+
         {/* ── CTA ─────────────────────────────────────────────────── */}
         <Pressable
           style={({ pressed }: { pressed: boolean }) => [s.cta, pressed && s.ctaPressed]}
@@ -243,13 +348,52 @@ export default function DashboardScreen() {
 }
 
 // ---------------------------------------------------------------------------
-// SpinAxisBar
+// ConnectButton — small action in the header
 // ---------------------------------------------------------------------------
 
-function axisToNorm(axis: number): number {
-  // Map -45..+45 → 0..1; clamp for safety
-  return Math.max(0, Math.min(1, (axis + 45) / 90));
+interface ConnectButtonProps {
+  state: ConnectionState;
+  onConnect: () => void;
+  onArm: () => void;
+  onDisconnect: () => void;
 }
+
+function ConnectButton({ state, onConnect, onArm, onDisconnect }: Readonly<ConnectButtonProps>) {
+  if (state === 'connecting') {
+    return (
+      <View style={[s.headerBtn, s.headerBtnDisabled]}>
+        <Text style={[s.headerBtnText, { color: C.textSecondary }]}>Verbinde…</Text>
+      </View>
+    );
+  }
+
+  if (state === 'disconnected') {
+    return (
+      <Pressable style={s.headerBtn} onPress={onConnect}>
+        <Text style={[s.headerBtnText, { color: C.success }]}>Verbinden</Text>
+      </Pressable>
+    );
+  }
+
+  if (state === 'connected') {
+    return (
+      <Pressable style={s.headerBtn} onPress={onArm}>
+        <Text style={[s.headerBtnText, { color: C.warning }]}>Armen</Text>
+      </Pressable>
+    );
+  }
+
+  // armed
+  return (
+    <Pressable style={s.headerBtn} onPress={onDisconnect}>
+      <Text style={[s.headerBtnText, { color: C.danger }]}>Trennen</Text>
+    </Pressable>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SpinAxisBar
+// ---------------------------------------------------------------------------
 
 interface SpinAxisBarProps {
   spinAxis: number;
@@ -263,11 +407,16 @@ function SpinAxisBar({ spinAxis, animValue }: Readonly<SpinAxisBarProps>) {
     setTrackWidth(e.nativeEvent.layout.width);
   };
 
-  const bias = spinAxis < -5 ? 'draw' : spinAxis > 5 ? 'fade' : 'straight';
+  let bias: 'draw' | 'fade' | 'straight';
+  if (spinAxis < -5) bias = 'draw';
+  else if (spinAxis > 5) bias = 'fade';
+  else bias = 'straight';
+
   let dotColor: string;
   if (bias === 'draw') dotColor = C.draw;
   else if (bias === 'fade') dotColor = C.fade;
   else dotColor = C.neutral;
+
   const dotSize = 16;
 
   return (
@@ -281,10 +430,7 @@ function SpinAxisBar({ spinAxis, animValue }: Readonly<SpinAxisBarProps>) {
       </View>
 
       <View style={s.axisTrack} onLayout={onLayout}>
-        {/* Center tick */}
         <View style={[s.axisCenterTick, { left: trackWidth / 2 - 0.5 }]} />
-
-        {/* Animated dot */}
         <Animated.View
           style={[
             s.axisDot,
@@ -323,7 +469,7 @@ function MetricCard({ value, unit, label, accent, estimated }: Readonly<MetricCa
         <View style={s.metricNumRow}>
           <Text style={s.metricNum}>{value}</Text>
           {unit ? <Text style={s.metricUnit}>{unit}</Text> : null}
-          {estimated && (
+          {estimated === true && (
             <View style={s.estimatedBadge}>
               <Text style={s.estimatedText}>~</Text>
             </View>
@@ -339,12 +485,122 @@ function MetricCard({ value, unit, label, accent, estimated }: Readonly<MetricCa
 // EmptyState
 // ---------------------------------------------------------------------------
 
-function EmptyState() {
+interface EmptyStateProps {
+  state: ConnectionState;
+  onConnect: () => void;
+}
+
+function EmptyState({ state, onConnect }: Readonly<EmptyStateProps>) {
+  let title: string;
+  if (state === 'connecting') title = 'Verbinde…';
+  else if (state === 'connected') title = 'Bereit zum Armen';
+  else title = 'Wartet auf Schlag';
+
+  const body = state === 'armed'
+    ? 'Schlag ausführen — Daten erscheinen hier.'
+    : state === 'connecting'
+      ? 'TCP-Verbindung zum Mevo+ wird aufgebaut.'
+      : 'Verbindung aufgebaut.';
+
   return (
     <View style={s.emptyCard}>
       <Text style={s.emptyGlyph}>◎</Text>
-      <Text style={s.emptyTitle}>Kein Schlag erfasst</Text>
-      <Text style={s.emptyBody}>Mevo+ verbinden und ersten Schlag ausführen.</Text>
+      {state === 'disconnected' ? (
+        <>
+          <Text style={s.emptyTitle}>Nicht verbunden</Text>
+          <Text style={s.emptyBody}>Mevo+ WLAN verbinden, dann hier starten.</Text>
+          <Pressable
+            style={({ pressed }: { pressed: boolean }) => [s.emptyConnectBtn, pressed && s.emptyConnectBtnPressed]}
+            onPress={onConnect}
+          >
+            <Text style={s.emptyConnectLabel}>Verbinden</Text>
+          </Pressable>
+        </>
+      ) : (
+        <>
+          {state === 'connecting' && (
+            <View style={s.connectingIndicatorRow}>
+              <Animated.View style={[s.connectingDot, { opacity: 0.9 }]} />
+              <Text style={s.connectingLabel}>Verbindung laeuft</Text>
+            </View>
+          )}
+          <Text style={s.emptyTitle}>{title}</Text>
+          <Text style={s.emptyBody}>{body}</Text>
+        </>
+      )}
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ErrorBanner
+// ---------------------------------------------------------------------------
+
+function ErrorBanner({ message }: Readonly<{ message: string }>) {
+  return (
+    <View style={s.errorBanner}>
+      <Text style={s.errorText}>{message}</Text>
+    </View>
+  );
+}
+
+function InfoBanner({ message }: Readonly<{ message: string }>) {
+  return (
+    <View style={s.infoBanner}>
+      <Text style={s.infoText}>{message}</Text>
+    </View>
+  );
+}
+
+function PriorityChip({
+  label,
+  value,
+  tone,
+}: Readonly<{ label: string; value: string; tone: 'gold' | 'draw' | 'teal' }>) {
+  const toneColor = tone === 'gold' ? C.gold : tone === 'draw' ? C.draw : C.teal;
+  return (
+    <View style={[s.priorityChip, { borderColor: `${toneColor}55`, backgroundColor: `${toneColor}14` }]}>
+      <Text style={s.priorityChipLabel}>{label}</Text>
+      <Text style={[s.priorityChipValue, { color: toneColor }]}>{value}</Text>
+    </View>
+  );
+}
+
+function TargetCard({
+  metric,
+  range,
+  note,
+  accent,
+}: Readonly<{ metric: string; range: string; note: string; accent: 'gold' | 'draw' | 'teal' }>) {
+  const accentColor = accent === 'gold' ? C.gold : accent === 'draw' ? C.draw : C.teal;
+  return (
+    <View style={s.targetCard}>
+      <View style={[s.targetCardBar, { backgroundColor: accentColor }]} />
+      <Text style={s.targetMetric}>{metric}</Text>
+      <Text style={s.targetRange}>{range}</Text>
+      <Text style={s.targetNote}>{note}</Text>
+    </View>
+  );
+}
+
+function RoadmapCard({
+  phase,
+  title,
+  body,
+  badge,
+}: Readonly<{ phase: string; title: string; body: string; badge: string }>) {
+  return (
+    <View style={s.roadmapCard}>
+      <View style={s.roadmapTop}>
+        <View>
+          <Text style={s.roadmapPhase}>{phase}</Text>
+          <Text style={s.roadmapTitle}>{title}</Text>
+        </View>
+        <View style={s.roadmapBadge}>
+          <Text style={s.roadmapBadgeText}>{badge}</Text>
+        </View>
+      </View>
+      <Text style={s.roadmapBody}>{body}</Text>
     </View>
   );
 }
@@ -358,23 +614,16 @@ const CARD_H_PAD = 16;
 const CARD_WIDTH = (SCREEN_WIDTH - CARD_H_PAD * 2 - CARD_GAP) / 2;
 
 const s = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: C.bg,
-  },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    paddingBottom: 48,
-  },
+  safe: { flex: 1, backgroundColor: C.bg },
+  scroll: { flex: 1 },
+  content: { paddingBottom: 48 },
 
   // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingTop: 10,
     paddingBottom: 20,
   },
@@ -408,6 +657,50 @@ const s = StyleSheet.create({
     color: C.textSecondary,
     marginTop: 2,
   },
+  headerBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+  },
+  headerBtnDisabled: {
+    opacity: 0.7,
+  },
+  headerBtnText: {
+    fontFamily: FONT.demi,
+    fontSize: 13,
+    letterSpacing: 0.3,
+  },
+
+  // Error banner
+  errorBanner: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+    backgroundColor: `${C.danger}22`,
+    borderWidth: 1,
+    borderColor: `${C.danger}55`,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  errorText: {
+    fontFamily: FONT.body,
+    fontSize: 13,
+    color: C.danger,
+  },
+  infoBanner: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+    backgroundColor: `${C.warning}18`,
+    borderWidth: 1,
+    borderColor: `${C.warning}55`,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  infoText: {
+    fontFamily: FONT.body,
+    fontSize: 13,
+    color: C.warning,
+  },
 
   // Hero card
   heroCard: {
@@ -423,8 +716,6 @@ const s = StyleSheet.create({
     alignItems: 'center',
     overflow: 'hidden',
   },
-
-  // Decorative arc behind the hero number
   arcWrap: {
     position: 'absolute',
     top: 0,
@@ -454,7 +745,6 @@ const s = StyleSheet.create({
     backgroundColor: C.gold,
     opacity: 0.25,
   },
-
   heroEyebrow: {
     fontFamily: FONT.mono,
     fontSize: 10,
@@ -481,10 +771,7 @@ const s = StyleSheet.create({
   },
 
   // Spin axis
-  axisOuter: {
-    width: '100%',
-    alignItems: 'stretch',
-  },
+  axisOuter: { width: '100%', alignItems: 'stretch' },
   axisLabelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -544,14 +831,8 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     overflow: 'hidden',
   },
-  metricBar: {
-    width: 3,
-  },
-  metricBody: {
-    flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-  },
+  metricBar: { width: 3 },
+  metricBody: { flex: 1, paddingVertical: 14, paddingHorizontal: 12 },
   metricNumRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
@@ -592,6 +873,141 @@ const s = StyleSheet.create({
     letterSpacing: 0.2,
   },
 
+  panel: {
+    marginHorizontal: 16,
+    marginBottom: 18,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 24,
+    padding: 18,
+  },
+  panelHeader: {
+    marginBottom: 14,
+  },
+  panelEyebrow: {
+    fontFamily: FONT.mono,
+    fontSize: 10,
+    color: C.textMuted,
+    letterSpacing: 2.4,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+  },
+  panelTitle: {
+    fontFamily: FONT.demi,
+    fontSize: 20,
+    color: C.text,
+    letterSpacing: 0.2,
+  },
+  priorityRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 14,
+  },
+  priorityChip: {
+    minWidth: 102,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flex: 1,
+  },
+  priorityChipLabel: {
+    fontFamily: FONT.body,
+    fontSize: 11,
+    color: C.textSecondary,
+    marginBottom: 4,
+  },
+  priorityChipValue: {
+    fontFamily: FONT.demi,
+    fontSize: 14,
+  },
+  corridorGrid: {
+    gap: 10,
+  },
+  targetCard: {
+    backgroundColor: C.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: C.border,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    overflow: 'hidden',
+  },
+  targetCardBar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+  },
+  targetMetric: {
+    fontFamily: FONT.mono,
+    fontSize: 12,
+    color: C.textSecondary,
+    letterSpacing: 1.1,
+    marginBottom: 6,
+  },
+  targetRange: {
+    fontFamily: FONT.demi,
+    fontSize: 18,
+    color: C.text,
+    marginBottom: 5,
+  },
+  targetNote: {
+    fontFamily: FONT.body,
+    fontSize: 13,
+    lineHeight: 19,
+    color: C.textSecondary,
+  },
+  roadmapCard: {
+    backgroundColor: C.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: C.border,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    marginBottom: 10,
+  },
+  roadmapTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  roadmapPhase: {
+    fontFamily: FONT.mono,
+    fontSize: 11,
+    color: C.textMuted,
+    letterSpacing: 1.4,
+    marginBottom: 3,
+  },
+  roadmapTitle: {
+    fontFamily: FONT.demi,
+    fontSize: 17,
+    color: C.text,
+  },
+  roadmapBadge: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: C.borderLight,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  roadmapBadgeText: {
+    fontFamily: FONT.mono,
+    fontSize: 10,
+    color: C.textSecondary,
+    letterSpacing: 1.2,
+  },
+  roadmapBody: {
+    fontFamily: FONT.body,
+    fontSize: 14,
+    lineHeight: 20,
+    color: C.textSecondary,
+  },
+
   // CTA button
   cta: {
     marginHorizontal: 16,
@@ -605,21 +1021,9 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  ctaPressed: {
-    borderColor: C.gold,
-    backgroundColor: C.goldGlow,
-  },
-  ctaLabel: {
-    fontFamily: FONT.demi,
-    fontSize: 13,
-    color: C.gold,
-    letterSpacing: 2.2,
-  },
-  ctaArrow: {
-    fontFamily: FONT.mono,
-    fontSize: 18,
-    color: C.gold,
-  },
+  ctaPressed: { borderColor: C.gold, backgroundColor: C.goldGlow },
+  ctaLabel: { fontFamily: FONT.demi, fontSize: 13, color: C.gold, letterSpacing: 2.2 },
+  ctaArrow: { fontFamily: FONT.mono, fontSize: 18, color: C.gold },
 
   // Empty state
   emptyCard: {
@@ -629,20 +1033,34 @@ const s = StyleSheet.create({
     borderRadius: 22,
     borderWidth: 1,
     borderColor: C.border,
-    paddingVertical: 56,
+    paddingVertical: 48,
     paddingHorizontal: 32,
     alignItems: 'center',
   },
-  emptyGlyph: {
-    fontSize: 38,
-    color: C.textMuted,
-    marginBottom: 16,
-  },
+  emptyGlyph: { fontSize: 38, color: C.textMuted, marginBottom: 16 },
   emptyTitle: {
     fontFamily: FONT.demi,
     fontSize: 17,
     color: C.textSecondary,
     marginBottom: 8,
+  },
+  connectingIndicatorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  connectingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: C.warning,
+  },
+  connectingLabel: {
+    fontFamily: FONT.mono,
+    fontSize: 11,
+    color: C.warning,
+    letterSpacing: 1.2,
   },
   emptyBody: {
     fontFamily: FONT.body,
@@ -650,5 +1068,20 @@ const s = StyleSheet.create({
     color: C.textMuted,
     textAlign: 'center',
     lineHeight: 20,
+    marginBottom: 24,
+  },
+  emptyConnectBtn: {
+    borderWidth: 1,
+    borderColor: C.success,
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+  },
+  emptyConnectBtnPressed: { backgroundColor: `${C.success}22` },
+  emptyConnectLabel: {
+    fontFamily: FONT.demi,
+    fontSize: 14,
+    color: C.success,
+    letterSpacing: 0.5,
   },
 });
