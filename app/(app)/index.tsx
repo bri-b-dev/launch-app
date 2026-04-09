@@ -17,6 +17,7 @@ import { router } from 'expo-router';
 import type { Href } from 'expo-router';
 import { useMevo } from '@bri-b-dev/gspro-connect-mevoplus';
 import type { ConnectionState } from '../../lib/types/shot';
+import { useActiveClub } from '../../lib/hooks/use-training-state';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -75,22 +76,22 @@ const STATE_LABEL: Record<ConnectionState, string> = {
   armed: 'BEREIT',
 };
 
-const TRAINING_PRIORITIES = [
+interface TrainingPriority {
+  label: string;
+  value: string;
+  tone: 'gold' | 'draw' | 'teal';
+}
+
+const TRAINING_PRIORITIES: TrainingPriority[] = [
   { label: 'Swing-Fokus', value: 'Early Extension', tone: 'gold' as const },
   { label: 'Bias', value: 'Draw-orientiert', tone: 'draw' as const },
   { label: 'Aktiver Klub', value: '7-Eisen', tone: 'teal' as const },
 ];
 
-const TARGET_CORRIDORS = [
-  { metric: 'AoA', range: '-2.0° bis -5.0°', note: 'Tour-nah fuer Irons', accent: 'teal' as const },
-  { metric: 'Spin Axis', range: '-3.0° bis -12.0°', note: 'leichter Draw-Bias', accent: 'draw' as const },
-  { metric: 'Face to Target', range: '-1.5° bis +0.5°', note: 'Startlinie neutral halten', accent: 'gold' as const },
-];
-
-const ROADMAP_PREVIEW = [
-  { phase: 'Phase 1', title: 'Connect + Capture', body: 'Verbindung, Arm, Live-Metriken und Session-Grundlage.', badge: 'MVP' },
-  { phase: 'Phase 2', title: 'Targets + Analyse', body: 'Margins, Dispersion, Trends und Feedback auf Schlagebene.', badge: 'Next' },
-  { phase: 'Phase 3', title: 'Video Layer', body: 'Post-Impact-Clips, Annotationen und Vergleichsansichten.', badge: 'v2' },
+const WORK_AREAS = [
+  { title: 'Session', body: 'Live-Metriken, Shot Rail und sofortiges Feedback.', badge: 'Jetzt' },
+  { title: 'History', body: 'Blocks, Durchschnitte und wiederkehrende Muster lesen.', badge: 'Nächster Screen' },
+  { title: 'Equipment', body: 'Korridore und Club-Zuordnung pro Schlag vorbereiten.', badge: 'Setup' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -107,6 +108,7 @@ export default function DashboardScreen() {
     arm,
     disconnect,
   } = useMevo();
+  const activeClub = useActiveClub();
 
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -119,10 +121,10 @@ export default function DashboardScreen() {
 
   const safeConnect = useCallback(async () => {
     if (!CONNECTOR_SUPPORTED) {
-      const message = 'Mevo+ Direktverbindung ist im Web nicht verfuegbar. Bitte in einer nativen Android- oder iOS-Development-Build auf einem Geraet testen.';
+      const message = 'Mevo+ Direktverbindung ist im Web nicht verfügbar. Bitte in einer nativen Android- oder iOS-Development-Build auf einem Gerät testen.';
       console.warn('[Mevo] ' + message);
       setActionError(message);
-      Alert.alert('Nicht unterstuetzt', message);
+      Alert.alert('Nicht unterstützt', message);
       return;
     }
     setActionError(null);
@@ -158,7 +160,7 @@ export default function DashboardScreen() {
   }, [disconnect, handleActionError]);
 
   // Session-Metadaten kommen in Phase 1 aus useSession()
-  const sessionClub = '7-Eisen';
+  const sessionClub = activeClub.name;
 
   // Connection dot pulse — only when armed
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -308,28 +310,57 @@ export default function DashboardScreen() {
 
         <View style={s.panel}>
           <View style={s.panelHeader}>
-            <Text style={s.panelEyebrow}>Trainingskontext</Text>
-            <Text style={s.panelTitle}>Session als Control Surface</Text>
+            <Text style={s.panelEyebrow}>Heute</Text>
+            <Text style={s.panelTitle}>Fokus und Zielkorridore</Text>
           </View>
           <View style={s.priorityRow}>
             {TRAINING_PRIORITIES.map((item) => (
-              <PriorityChip key={item.label} {...item} />
+              <PriorityChip
+                key={item.label}
+                label={item.label}
+                tone={item.tone}
+                value={item.label === 'Aktiver Klub' ? activeClub.name : item.value}
+              />
             ))}
           </View>
           <View style={s.corridorGrid}>
-            {TARGET_CORRIDORS.map((item) => (
-              <TargetCard key={item.metric} {...item} />
+            {activeClub.targets.map((item) => (
+              <TargetCard
+                key={item.label}
+                metric={item.label}
+                range={item.range}
+                note={`Aktuell ${item.current}`}
+                accent={item.accent === 'green' ? 'teal' : item.accent === 'blue' ? 'draw' : 'gold'}
+              />
             ))}
           </View>
         </View>
 
         <View style={s.panel}>
           <View style={s.panelHeader}>
-            <Text style={s.panelEyebrow}>Roadmap in der UI</Text>
-            <Text style={s.panelTitle}>Vom Messgeraet zur Trainingsoberflaeche</Text>
+            <Text style={s.panelEyebrow}>Verlauf</Text>
+            <Text style={s.panelTitle}>Letzte Schläge auf einen Blick</Text>
           </View>
-          {ROADMAP_PREVIEW.map((item) => (
-            <RoadmapCard key={item.phase} {...item} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.shotRail}>
+            {activeClub.shots.slice(0, 3).map((item) => (
+              <RecentShotCard
+                key={item.id}
+                carry={item.carry}
+                shape={item.shape}
+                note={item.quality.toLowerCase()}
+                accent={item.accent === 'green' ? 'teal' : item.accent === 'blue' ? 'draw' : 'gold'}
+              />
+            ))}
+          </ScrollView>
+        </View>
+
+        <View style={s.panel}>
+          <View style={s.panelHeader}>
+            <Text style={s.panelEyebrow}>Arbeitsbereiche</Text>
+            <Text style={s.panelTitle}>Nicht erklären, sondern benutzen</Text>
+          </View>
+          {WORK_AREAS.map((item) => (
+            <WorkAreaCard key={item.title} {...item} />
           ))}
         </View>
 
@@ -521,7 +552,7 @@ function EmptyState({ state, onConnect }: Readonly<EmptyStateProps>) {
           {state === 'connecting' && (
             <View style={s.connectingIndicatorRow}>
               <Animated.View style={[s.connectingDot, { opacity: 0.9 }]} />
-              <Text style={s.connectingLabel}>Verbindung laeuft</Text>
+              <Text style={s.connectingLabel}>Verbindung läuft</Text>
             </View>
           )}
           <Text style={s.emptyTitle}>{title}</Text>
@@ -583,24 +614,39 @@ function TargetCard({
   );
 }
 
-function RoadmapCard({
-  phase,
+function RecentShotCard({
+  carry,
+  shape,
+  note,
+  accent,
+}: Readonly<{ carry: string; shape: string; note: string; accent: 'gold' | 'draw' | 'teal' }>) {
+  const accentColor = accent === 'gold' ? C.gold : accent === 'draw' ? C.draw : C.teal;
+  return (
+    <View style={s.recentShotCard}>
+      <View style={[s.recentShotAccent, { backgroundColor: accentColor }]} />
+      <Text style={s.recentShotCarry}>{carry}</Text>
+      <Text style={s.recentShotShape}>{shape}</Text>
+      <Text style={s.recentShotNote}>{note}</Text>
+    </View>
+  );
+}
+
+function WorkAreaCard({
   title,
   body,
   badge,
-}: Readonly<{ phase: string; title: string; body: string; badge: string }>) {
+}: Readonly<{ title: string; body: string; badge: string }>) {
   return (
-    <View style={s.roadmapCard}>
-      <View style={s.roadmapTop}>
+    <View style={s.workAreaCard}>
+      <View style={s.workAreaTop}>
         <View>
-          <Text style={s.roadmapPhase}>{phase}</Text>
-          <Text style={s.roadmapTitle}>{title}</Text>
+          <Text style={s.workAreaTitle}>{title}</Text>
         </View>
-        <View style={s.roadmapBadge}>
-          <Text style={s.roadmapBadgeText}>{badge}</Text>
+        <View style={s.workAreaBadge}>
+          <Text style={s.workAreaBadgeText}>{badge}</Text>
         </View>
       </View>
-      <Text style={s.roadmapBody}>{body}</Text>
+      <Text style={s.workAreaBody}>{body}</Text>
     </View>
   );
 }
@@ -926,6 +972,10 @@ const s = StyleSheet.create({
   corridorGrid: {
     gap: 10,
   },
+  shotRail: {
+    gap: 10,
+    paddingRight: 4,
+  },
   targetCard: {
     backgroundColor: C.card,
     borderRadius: 16,
@@ -961,7 +1011,40 @@ const s = StyleSheet.create({
     lineHeight: 19,
     color: C.textSecondary,
   },
-  roadmapCard: {
+  recentShotCard: {
+    width: 108,
+    backgroundColor: C.card,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: C.border,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  recentShotAccent: {
+    width: 28,
+    height: 4,
+    borderRadius: 2,
+    marginBottom: 12,
+  },
+  recentShotCarry: {
+    fontFamily: FONT.mono,
+    fontSize: 28,
+    color: C.text,
+    marginBottom: 4,
+  },
+  recentShotShape: {
+    fontFamily: FONT.demi,
+    fontSize: 13,
+    color: C.textSecondary,
+    marginBottom: 4,
+  },
+  recentShotNote: {
+    fontFamily: FONT.body,
+    fontSize: 12,
+    lineHeight: 16,
+    color: C.textMuted,
+  },
+  workAreaCard: {
     backgroundColor: C.card,
     borderRadius: 16,
     borderWidth: 1,
@@ -970,38 +1053,31 @@ const s = StyleSheet.create({
     paddingVertical: 14,
     marginBottom: 10,
   },
-  roadmapTop: {
+  workAreaTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 8,
   },
-  roadmapPhase: {
-    fontFamily: FONT.mono,
-    fontSize: 11,
-    color: C.textMuted,
-    letterSpacing: 1.4,
-    marginBottom: 3,
-  },
-  roadmapTitle: {
+  workAreaTitle: {
     fontFamily: FONT.demi,
     fontSize: 17,
     color: C.text,
   },
-  roadmapBadge: {
+  workAreaBadge: {
     borderRadius: 999,
     borderWidth: 1,
     borderColor: C.borderLight,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
-  roadmapBadgeText: {
+  workAreaBadgeText: {
     fontFamily: FONT.mono,
     fontSize: 10,
     color: C.textSecondary,
     letterSpacing: 1.2,
   },
-  roadmapBody: {
+  workAreaBody: {
     fontFamily: FONT.body,
     fontSize: 14,
     lineHeight: 20,
