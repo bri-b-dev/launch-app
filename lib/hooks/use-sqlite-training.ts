@@ -67,9 +67,12 @@ export interface ShotStats {
   avgCarry: number | null;
   stdDevCarry: number | null;
   avgBallSpeed: number | null;
+  stdDevBallSpeed: number | null;
   avgClubSpeed: number | null;
+  stdDevClubSpeed: number | null;
   avgVla: number | null;
   avgSpin: number | null;
+  stdDevSpin: number | null;
   hitRatePct: number | null;
 }
 
@@ -97,11 +100,13 @@ export function computeStats(shots: DbShot[]): ShotStats {
       avgCarry: null,
       stdDevCarry: null,
       avgBallSpeed: null,
+      stdDevBallSpeed: null,
       avgClubSpeed: null,
+      stdDevClubSpeed: null,
       avgVla: null,
       avgSpin: null,
+      stdDevSpin: null,
       hitRatePct: null,
-      drawPct: null,
     };
   }
 
@@ -117,9 +122,12 @@ export function computeStats(shots: DbShot[]): ShotStats {
     avgCarry: numAvg(carries),
     stdDevCarry: numStdDev(carries),
     avgBallSpeed: numAvg(ballSpeeds),
+    stdDevBallSpeed: numStdDev(ballSpeeds),
     avgClubSpeed: clubSpeeds.length > 0 ? numAvg(clubSpeeds) : null,
+    stdDevClubSpeed: clubSpeeds.length > 0 ? numStdDev(clubSpeeds) : null,
     avgVla: numAvg(vlas),
     avgSpin: numAvg(spins),
+    stdDevSpin: numStdDev(spins),
     hitRatePct: (hitCount / shots.length) * 100,
   };
 }
