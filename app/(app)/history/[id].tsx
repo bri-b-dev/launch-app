@@ -8,6 +8,7 @@ import {
   useSessionShotsDetail,
   type DbShotDetail,
 } from '../../../lib/hooks/use-sqlite-training';
+import { ShotDispersionChart } from '../../../components/charts/ShotDispersionChart';
 
 const FONT = {
   mono: Platform.OS === 'ios' ? 'Menlo-Regular' : 'monospace',
@@ -228,6 +229,16 @@ export default function HistoryDetailScreen() {
           )}
         </View>
 
+        {/* Shot Dispersion */}
+        {shots.length > 0 && (
+          <>
+            <SectionHeading label="Shot Dispersion" />
+            <View style={s.chartCard}>
+              <ShotDispersionChart shots={shots} />
+            </View>
+          </>
+        )}
+
         {/* Individual shots */}
         {shots.length > 0 && (
           <>
@@ -326,6 +337,7 @@ const s = StyleSheet.create({
   subtitle: { fontFamily: FONT.body, color: '#8DA0B3', fontSize: 15, lineHeight: 22, marginBottom: 16 },
 
   card: { backgroundColor: '#0D1821', borderWidth: 1, borderColor: '#223244', borderRadius: 22, padding: 16, marginBottom: 14 },
+  chartCard: { backgroundColor: '#080C10', borderWidth: 1, borderColor: '#223244', borderRadius: 22, overflow: 'hidden', marginBottom: 14 },
   cardLabel: { fontFamily: FONT.mono, color: '#53677A', fontSize: 11, marginBottom: 6 },
   cardBody: { fontFamily: FONT.body, color: '#EEF3F7', fontSize: 15, lineHeight: 22, marginBottom: 10 },
   cardMeta: { fontFamily: FONT.body, color: '#8DA0B3', fontSize: 13 },

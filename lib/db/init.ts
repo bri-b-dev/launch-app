@@ -59,11 +59,15 @@ export async function initializeDatabase(db: SQLiteDatabase): Promise<void> {
       club_speed TEXT NOT NULL,
       vla TEXT NOT NULL,
       spin TEXT NOT NULL,
-      accent TEXT NOT NULL
+      accent TEXT NOT NULL,
+      hla REAL,
+      spin_axis REAL
     );
   `);
 
   await ensureColumn(db, 'shots', 'session_id', "TEXT NOT NULL DEFAULT ''");
+  await ensureColumn(db, 'shots', 'hla', 'REAL');
+  await ensureColumn(db, 'shots', 'spin_axis', 'REAL');
   await ensureColumn(db, 'clubs', 'length', "TEXT NOT NULL DEFAULT ''");
   await ensureColumn(db, 'clubs', 'manufacturer', "TEXT NOT NULL DEFAULT ''");
   await ensureColumn(db, 'clubs', 'model', "TEXT NOT NULL DEFAULT ''");

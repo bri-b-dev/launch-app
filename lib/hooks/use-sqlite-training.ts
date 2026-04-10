@@ -60,6 +60,8 @@ export interface DbShot {
   vla: string;
   spin: string;
   accent: 'green' | 'blue' | 'gold' | 'orange';
+  hla: number | null;
+  spin_axis: number | null;
 }
 
 export interface ShotStats {
@@ -645,8 +647,8 @@ export function useShotCapture() {
 
     await db.withTransactionAsync(async () => {
       await db.runAsync(
-        `INSERT INTO shots (id, club_id, session_id, carry, shape, quality, note, ball_speed, club_speed, vla, spin, accent)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO shots (id, club_id, session_id, carry, shape, quality, note, ball_speed, club_speed, vla, spin, accent, hla, spin_axis)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         shotId,
         clubId,
         sessionId,
@@ -659,6 +661,8 @@ export function useShotCapture() {
         shot.verticalLaunchAngle.toFixed(1),
         shot.totalSpin.toFixed(0),
         classified.accent,
+        shot.horizontalLaunchAngle,
+        shot.spinAxis,
       );
 
       const stats = await db.getFirstAsync<{ count: number; avgCarry: number | null }>(
