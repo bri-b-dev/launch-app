@@ -50,6 +50,7 @@ export async function initializeDatabase(db: SQLiteDatabase): Promise<void> {
     CREATE TABLE IF NOT EXISTS shots (
       id TEXT PRIMARY KEY NOT NULL,
       club_id TEXT NOT NULL,
+      session_id TEXT NOT NULL DEFAULT '',
       carry TEXT NOT NULL,
       shape TEXT NOT NULL,
       quality TEXT NOT NULL,
@@ -62,6 +63,7 @@ export async function initializeDatabase(db: SQLiteDatabase): Promise<void> {
     );
   `);
 
+  await ensureColumn(db, 'shots', 'session_id', "TEXT NOT NULL DEFAULT ''");
   await ensureColumn(db, 'clubs', 'length', "TEXT NOT NULL DEFAULT ''");
   await ensureColumn(db, 'clubs', 'manufacturer', "TEXT NOT NULL DEFAULT ''");
   await ensureColumn(db, 'clubs', 'model', "TEXT NOT NULL DEFAULT ''");

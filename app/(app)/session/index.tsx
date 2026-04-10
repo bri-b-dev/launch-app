@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useTrainingState } from '../../../lib/hooks/use-training-state';
-import { type DbMargin, useClubShots, useClubs, useMargins } from '../../../lib/hooks/use-sqlite-training';
+import {
+  type DbMargin,
+  type ShotStats,
+  computeStats,
+  useClubShots,
+  useClubs,
+  useMargins,
+  useSessionShots,
+} from '../../../lib/hooks/use-sqlite-training';
 
 const C = {
   bg: '#071018',
@@ -30,6 +38,7 @@ const FONT = {
 
 const MODE_OPTIONS = ['Full Swing', 'Approach', 'Wedge'];
 
+type StatsScope = 'heute' | 'gesamt';
 type MarginStatusTone = 'good' | 'near' | 'bad' | 'idle';
 
 function extractNumbers(input: string): number[] {
@@ -86,11 +95,19 @@ function evaluateMargin(target: DbMargin): {
 
 export default function SessionScreen() {
   const [selectedMode] = useState('Full Swing');
+  const [statsScope, setStatsScope] = useState<StatsScope>('heute');
   const { activeClubId, setActiveClubId } = useTrainingState();
   const { rows: clubs, loading: clubsLoading, error: clubsError } = useClubs();
   const club = clubs.find((item) => item.id === activeClubId) ?? clubs[0];
   const { rows: targets, loading: marginsLoading } = useMargins(club?.id ?? null);
   const { rows: shots, loading: shotsLoading } = useClubShots(club?.id ?? null);
+  const todaySessionId = club != null
+    ? `session-${new Date().toISOString().slice(0, 10)}-${club.id}`
+    : null;
+  const { rows: sessionShots } = useSessionShots(todaySessionId);
+  const clubStats = useMemo(() => computeStats(shots), [shots]);
+  const todayStats = useMemo(() => computeStats(sessionShots), [sessionShots]);
+  const activeStats = statsScope === 'heute' ? todayStats : clubStats;
   const leadShot = shots[0];
   const marginSummary = targets.reduce(
     (summary, target) => {
@@ -230,15 +247,62 @@ export default function SessionScreen() {
 
         <View style={s.section}>
           <View style={s.sectionHeader}>
-            <Text style={s.sectionEyebrow}>Arbeitsflächen</Text>
-            <Text style={s.sectionLink}>Session Stats</Text>
+            <Text style={s.sectionEyebrow}>Statistik</Text>
+            <View style={s.scopeToggle}>
+              <Pressable
+                style={[s.scopeChip, statsScope === 'heute' && s.scopeChipActive]}
+                onPress={() => setStatsScope('heute')}
+              >
+                <Text style={[s.scopeChipText, statsScope === 'heute' && s.scopeChipTextActive]}>Heute</Text>
+              </Pressable>
+              <Pressable
+                style={[s.scopeChip, statsScope === 'gesamt' && s.scopeChipActive]}
+                onPress={() => setStatsScope('gesamt')}
+              >
+                <Text style={[s.scopeChipText, statsScope === 'gesamt' && s.scopeChipTextActive]}>Gesamt</Text>
+              </Pressable>
+            </View>
           </View>
-          <View style={s.surfaceGrid}>
-            <SurfaceCard title="Dispersion" body="Landepunkte kompakt statt Vollchart, direkt aus der Session heraus." />
-            <SurfaceCard title="Face Impact" body="Treffbild als schneller Kontroll-Layer für heel/toe-Tendenzen." />
-            <SurfaceCard title="Notizen" body="Kurzfeedback pro Schlag oder pro Block, ohne den Flow zu brechen." />
-            <SurfaceCard title="Video Queue" body="Clips an den letzten Schlag hängen, später im Detailscreen lesen." />
-          </View>
+          {activeStats.shotCount === 0 ? (
+            <Text style={s.infoText}>
+              {statsScope === 'heute'
+                ? 'Noch keine Schläge heute — starte die Mevo-Session.'
+                : 'Noch keine Schläge für diesen Club.'}
+            </Text>
+          ) : (
+            <>
+              <StatRow
+                label="Schläge"
+                value={String(activeStats.shotCount)}
+              />
+              <StatRow
+                label="Ø Carry"
+                value={
+                  activeStats.avgCarry != null
+                    ? `${Math.round(activeStats.avgCarry)} y${activeStats.stdDevCarry != null ? ` ± ${Math.round(activeStats.stdDevCarry)} y` : ''}`
+                    : '—'
+                }
+                accent={C.gold}
+              />
+              <StatRow
+                label="Trefferquote"
+                value={activeStats.hitRatePct != null ? `${Math.round(activeStats.hitRatePct)} %` : '—'}
+                accent={activeStats.hitRatePct != null && activeStats.hitRatePct >= 70 ? C.green : activeStats.hitRatePct != null && activeStats.hitRatePct >= 50 ? C.gold : C.red}
+              />
+              {activeStats.avgBallSpeed != null && (
+                <StatRow label="Ø Ball Speed" value={`${activeStats.avgBallSpeed.toFixed(1)} mph`} />
+              )}
+              {activeStats.avgClubSpeed != null && (
+                <StatRow label="Ø Club Speed" value={`${activeStats.avgClubSpeed.toFixed(1)} mph`} />
+              )}
+              {activeStats.avgVla != null && (
+                <StatRow label="Ø VLA" value={`${activeStats.avgVla.toFixed(1)} °`} />
+              )}
+              {activeStats.avgSpin != null && (
+                <StatRow label="Ø Spin" value={`${Math.round(activeStats.avgSpin)} rpm`} />
+              )}
+            </>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -297,11 +361,15 @@ function LiveMetric({
   );
 }
 
-function SurfaceCard({ title, body }: Readonly<{ title: string; body: string }>) {
+function StatRow({
+  label,
+  value,
+  accent,
+}: Readonly<{ label: string; value: string; accent?: string }>) {
   return (
-    <View style={s.surfaceCard}>
-      <Text style={s.surfaceTitle}>{title}</Text>
-      <Text style={s.surfaceBody}>{body}</Text>
+    <View style={s.statRow}>
+      <Text style={s.statLabel}>{label}</Text>
+      <Text style={[s.statValue, accent != null && { color: accent }]}>{value}</Text>
     </View>
   );
 }
@@ -652,31 +720,46 @@ const s = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
   },
-  surfaceGrid: {
+  scopeToggle: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
+    gap: 6,
   },
-  surfaceCard: {
-    width: '48%',
-    minWidth: 145,
-    backgroundColor: C.panelAlt,
-    borderRadius: 18,
+  scopeChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
     borderWidth: 1,
     borderColor: C.border,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    backgroundColor: C.panel,
   },
-  surfaceTitle: {
+  scopeChipActive: {
+    backgroundColor: `${C.gold}18`,
+    borderColor: `${C.gold}55`,
+  },
+  scopeChipText: {
     fontFamily: FONT.demi,
-    color: C.text,
-    fontSize: 16,
-    marginBottom: 6,
+    color: C.textSecondary,
+    fontSize: 12,
   },
-  surfaceBody: {
+  scopeChipTextActive: {
+    color: C.gold,
+  },
+  statRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  statLabel: {
     fontFamily: FONT.body,
     color: C.textSecondary,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 14,
+  },
+  statValue: {
+    fontFamily: FONT.demi,
+    color: C.text,
+    fontSize: 14,
   },
 });

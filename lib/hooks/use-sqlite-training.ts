@@ -50,6 +50,7 @@ export interface DbSession {
 export interface DbShot {
   id: string;
   club_id: string;
+  session_id: string;
   carry: string;
   shape: string;
   quality: string;
@@ -59,6 +60,68 @@ export interface DbShot {
   vla: string;
   spin: string;
   accent: 'green' | 'blue' | 'gold' | 'orange';
+}
+
+export interface ShotStats {
+  shotCount: number;
+  avgCarry: number | null;
+  stdDevCarry: number | null;
+  avgBallSpeed: number | null;
+  avgClubSpeed: number | null;
+  avgVla: number | null;
+  avgSpin: number | null;
+  hitRatePct: number | null;
+}
+
+function parseNum(val: string): number | null {
+  const n = Number.parseFloat(val.replace(',', '.'));
+  return Number.isFinite(n) ? n : null;
+}
+
+function numAvg(values: number[]): number | null {
+  if (values.length === 0) return null;
+  return values.reduce((a, b) => a + b, 0) / values.length;
+}
+
+function numStdDev(values: number[]): number | null {
+  if (values.length < 2) return null;
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  const variance = values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length;
+  return Math.sqrt(variance);
+}
+
+export function computeStats(shots: DbShot[]): ShotStats {
+  if (shots.length === 0) {
+    return {
+      shotCount: 0,
+      avgCarry: null,
+      stdDevCarry: null,
+      avgBallSpeed: null,
+      avgClubSpeed: null,
+      avgVla: null,
+      avgSpin: null,
+      hitRatePct: null,
+      drawPct: null,
+    };
+  }
+
+  const carries = shots.map((s) => parseNum(s.carry)).filter((v): v is number => v != null);
+  const ballSpeeds = shots.map((s) => parseNum(s.ball_speed)).filter((v): v is number => v != null);
+  const clubSpeeds = shots.map((s) => parseNum(s.club_speed)).filter((v): v is number => v != null);
+  const vlas = shots.map((s) => parseNum(s.vla)).filter((v): v is number => v != null);
+  const spins = shots.map((s) => parseNum(s.spin)).filter((v): v is number => v != null);
+  const hitCount = shots.filter((s) => s.accent !== 'orange').length;
+
+  return {
+    shotCount: shots.length,
+    avgCarry: numAvg(carries),
+    stdDevCarry: numStdDev(carries),
+    avgBallSpeed: numAvg(ballSpeeds),
+    avgClubSpeed: clubSpeeds.length > 0 ? numAvg(clubSpeeds) : null,
+    avgVla: numAvg(vlas),
+    avgSpin: numAvg(spins),
+    hitRatePct: (hitCount / shots.length) * 100,
+  };
 }
 
 export interface DbSessionClub extends DbClub {
@@ -255,6 +318,17 @@ export function useClubShots(clubId: string | null) {
     return db.getAllAsync<DbShot>(
       'SELECT * FROM shots WHERE club_id = ? ORDER BY rowid DESC',
       clubId,
+    );
+  });
+}
+
+export function useSessionShots(sessionId: string | null) {
+  const db = useSQLiteContext();
+  return useAsyncRows<DbShot>(`session-shots-${sessionId ?? 'none'}`, async () => {
+    if (sessionId == null) return [];
+    return db.getAllAsync<DbShot>(
+      'SELECT * FROM shots WHERE session_id = ? ORDER BY rowid DESC',
+      sessionId,
     );
   });
 }
@@ -469,10 +543,11 @@ export function useShotCapture() {
 
     await db.withTransactionAsync(async () => {
       await db.runAsync(
-        `INSERT INTO shots (id, club_id, carry, shape, quality, note, ball_speed, club_speed, vla, spin, accent)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO shots (id, club_id, session_id, carry, shape, quality, note, ball_speed, club_speed, vla, spin, accent)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         shotId,
         clubId,
+        sessionId,
         shot.carryDistanceYards.toFixed(0),
         classified.shape,
         classified.quality,
@@ -550,9 +625,9 @@ export function useShotCapture() {
       }
 
       const marginUpdates = [
-        { label: 'AoA', value: shot.angleOfAttack != null ? `${shot.angleOfAttack.toFixed(1)}°` : '—' },
+        { label: 'AoA', value: shot.angleOfAttack == null ? '—' : `${shot.angleOfAttack.toFixed(1)}°` },
         { label: 'Spin Axis', value: `${shot.spinAxis.toFixed(1)}°` },
-        { label: 'Face to Target', value: shot.faceToTarget != null ? `${shot.faceToTarget.toFixed(1)}°` : '—' },
+        { label: 'Face to Target', value: shot.faceToTarget == null ? '—' : `${shot.faceToTarget.toFixed(1)}°` },
       ];
 
       for (const margin of marginUpdates) {
