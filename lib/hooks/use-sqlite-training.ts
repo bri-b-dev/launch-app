@@ -66,14 +66,18 @@ export interface ShotStats {
   shotCount: number;
   avgCarry: number | null;
   stdDevCarry: number | null;
+  minCarry: number | null;
+  maxCarry: number | null;
   avgBallSpeed: number | null;
   stdDevBallSpeed: number | null;
   avgClubSpeed: number | null;
   stdDevClubSpeed: number | null;
+  smashFactor: number | null;
   avgVla: number | null;
   avgSpin: number | null;
   stdDevSpin: number | null;
   hitRatePct: number | null;
+  shapeDist: Record<string, number>;
 }
 
 function parseNum(val: string): number | null {
@@ -99,14 +103,18 @@ export function computeStats(shots: DbShot[]): ShotStats {
       shotCount: 0,
       avgCarry: null,
       stdDevCarry: null,
+      minCarry: null,
+      maxCarry: null,
       avgBallSpeed: null,
       stdDevBallSpeed: null,
       avgClubSpeed: null,
       stdDevClubSpeed: null,
+      smashFactor: null,
       avgVla: null,
       avgSpin: null,
       stdDevSpin: null,
       hitRatePct: null,
+      shapeDist: {},
     };
   }
 
@@ -117,18 +125,34 @@ export function computeStats(shots: DbShot[]): ShotStats {
   const spins = shots.map((s) => parseNum(s.spin)).filter((v): v is number => v != null);
   const hitCount = shots.filter((s) => s.accent !== 'orange').length;
 
+  const shapeDist: Record<string, number> = {};
+  for (const shot of shots) {
+    shapeDist[shot.shape] = (shapeDist[shot.shape] ?? 0) + 1;
+  }
+
+  const avgBallSpeed = numAvg(ballSpeeds);
+  const avgClubSpeed = clubSpeeds.length > 0 ? numAvg(clubSpeeds) : null;
+  const smashFactor =
+    avgBallSpeed != null && avgClubSpeed != null && avgClubSpeed > 0
+      ? avgBallSpeed / avgClubSpeed
+      : null;
+
   return {
     shotCount: shots.length,
     avgCarry: numAvg(carries),
     stdDevCarry: numStdDev(carries),
-    avgBallSpeed: numAvg(ballSpeeds),
+    minCarry: carries.length > 0 ? Math.min(...carries) : null,
+    maxCarry: carries.length > 0 ? Math.max(...carries) : null,
+    avgBallSpeed,
     stdDevBallSpeed: numStdDev(ballSpeeds),
-    avgClubSpeed: clubSpeeds.length > 0 ? numAvg(clubSpeeds) : null,
+    avgClubSpeed,
     stdDevClubSpeed: clubSpeeds.length > 0 ? numStdDev(clubSpeeds) : null,
+    smashFactor,
     avgVla: numAvg(vlas),
     avgSpin: numAvg(spins),
     stdDevSpin: numStdDev(spins),
     hitRatePct: (hitCount / shots.length) * 100,
+    shapeDist,
   };
 }
 
@@ -420,6 +444,39 @@ export function useSessionDetail(sessionId: string | null) {
     loading: sessionState.loading || clubsState.loading,
     error: sessionState.error ?? clubsState.error,
   };
+}
+
+export interface DbClubSessionStat {
+  session_id: string;
+  date: string;
+  title: string;
+  shot_count: number;
+  avg_carry: number | null;
+  avg_ball_speed: number | null;
+  hit_rate_pct: number | null;
+}
+
+export function useClubSessionStats(clubId: string | null) {
+  const db = useSQLiteContext();
+  return useAsyncRows<DbClubSessionStat>(`club-session-stats-${clubId ?? 'none'}`, async () => {
+    if (clubId == null) return [];
+    return db.getAllAsync<DbClubSessionStat>(
+      `SELECT
+         shots.session_id,
+         COALESCE(s.date, '') AS date,
+         COALESCE(s.title, shots.session_id) AS title,
+         COUNT(*) AS shot_count,
+         AVG(CAST(shots.carry AS REAL)) AS avg_carry,
+         AVG(CAST(CASE WHEN shots.ball_speed = '—' THEN NULL ELSE shots.ball_speed END AS REAL)) AS avg_ball_speed,
+         SUM(CASE WHEN shots.accent != 'orange' THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS hit_rate_pct
+       FROM shots
+       LEFT JOIN sessions s ON s.id = shots.session_id
+       WHERE shots.club_id = ?
+       GROUP BY shots.session_id
+       ORDER BY MAX(shots.rowid) DESC`,
+      clubId,
+    );
+  });
 }
 
 export function useShotDetail(shotId: string | null) {

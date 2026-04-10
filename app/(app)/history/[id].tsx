@@ -164,6 +164,16 @@ export default function HistoryDetailScreen() {
                 }
                 accent="#D2B15C"
               />
+              {(statsAll.minCarry != null || statsAll.maxCarry != null) && (
+                <StatRow
+                  label="Carry Spanne"
+                  value={
+                    statsAll.minCarry != null && statsAll.maxCarry != null
+                      ? `${Math.round(statsAll.minCarry)} – ${Math.round(statsAll.maxCarry)} y`
+                      : '—'
+                  }
+                />
+              )}
               <StatRow
                 label="Trefferquote"
                 value={statsAll.hitRatePct != null ? `${Math.round(statsAll.hitRatePct)} %` : '—'}
@@ -173,16 +183,36 @@ export default function HistoryDetailScreen() {
                       : '#DE6E63'
                 }
               />
+              {Object.keys(statsAll.shapeDist).length > 0 && (
+                <StatRow
+                  label="Schlagformen"
+                  value={Object.entries(statsAll.shapeDist)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([shape, count]) => `${count}× ${shape}`)
+                    .join(' · ')}
+                />
+              )}
               {statsAll.avgBallSpeed != null && (
                 <StatRow
                   label="Ø Ball Speed"
-                  value={`${statsAll.avgBallSpeed.toFixed(1)} mph${statsAll.stdDevBallSpeed != null ? ` ± ${statsAll.stdDevBallSpeed.toFixed(1)} mph` : ''}`}
+                  value={`${statsAll.avgBallSpeed.toFixed(1)} mph${statsAll.stdDevBallSpeed != null ? ` ± ${statsAll.stdDevBallSpeed.toFixed(1)}` : ''}`}
                 />
               )}
               {statsAll.avgClubSpeed != null && (
                 <StatRow
                   label="Ø Club Speed"
-                  value={`${statsAll.avgClubSpeed.toFixed(1)} mph${statsAll.stdDevClubSpeed != null ? ` ± ${statsAll.stdDevClubSpeed.toFixed(1)} mph` : ''}`}
+                  value={`${statsAll.avgClubSpeed.toFixed(1)} mph${statsAll.stdDevClubSpeed != null ? ` ± ${statsAll.stdDevClubSpeed.toFixed(1)}` : ''}`}
+                />
+              )}
+              {statsAll.smashFactor != null && (
+                <StatRow
+                  label="Smash Factor"
+                  value={statsAll.smashFactor.toFixed(2)}
+                  accent={
+                    statsAll.smashFactor >= 1.48 ? '#4AC18D'
+                      : statsAll.smashFactor >= 1.40 ? '#D2B15C'
+                        : '#DE6E63'
+                  }
                 />
               )}
               {statsAll.avgVla != null && (

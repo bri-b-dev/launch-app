@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { useTrainingState } from '../../../lib/hooks/use-training-state';
 import {
   type ClubDraft,
@@ -363,6 +364,9 @@ export default function EquipmentScreen() {
             </Pressable>
 
             <View style={s.actionRow}>
+              <Pressable style={s.inlineButton} onPress={() => router.push({ pathname: '/equipment/[id]', params: { id: club.id } })}>
+                <Text style={s.inlineButtonText}>Verlauf</Text>
+              </Pressable>
               <Pressable style={s.inlineButton} onPress={() => startEdit(club)}>
                 <Text style={s.inlineButtonText}>Bearbeiten</Text>
               </Pressable>
