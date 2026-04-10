@@ -348,6 +348,43 @@ export function useSessions() {
   );
 }
 
+export interface DbSessionEnriched extends DbSession {
+  club_names: string;
+}
+
+export function useSessionsEnriched() {
+  const db = useSQLiteContext();
+  return useAsyncRows<DbSessionEnriched>('sessions-enriched', () =>
+    db.getAllAsync<DbSessionEnriched>(
+      `SELECT s.*, COALESCE(GROUP_CONCAT(c.name, ', '), '') AS club_names
+       FROM sessions s
+       LEFT JOIN session_clubs sc ON sc.session_id = s.id
+       LEFT JOIN clubs c ON c.id = sc.club_id
+       GROUP BY s.id
+       ORDER BY s.rowid DESC`,
+    ),
+  );
+}
+
+export function useSessionShotsDetail(sessionId: string | null) {
+  const db = useSQLiteContext();
+  return useAsyncRows<DbShotDetail>(`session-shots-detail-${sessionId ?? 'none'}`, async () => {
+    if (sessionId == null) return [];
+    return db.getAllAsync<DbShotDetail>(
+      `SELECT shots.*,
+              clubs.name AS club_name,
+              clubs.type AS club_type,
+              clubs.loft AS club_loft,
+              clubs.target AS club_target
+       FROM shots
+       INNER JOIN clubs ON clubs.id = shots.club_id
+       WHERE shots.session_id = ?
+       ORDER BY shots.rowid ASC`,
+      sessionId,
+    );
+  });
+}
+
 export function useSessionDetail(sessionId: string | null) {
   const db = useSQLiteContext();
   const sessionState = useAsyncValue<DbSession>(

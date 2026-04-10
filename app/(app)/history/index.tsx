@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useSessions } from '../../../lib/hooks/use-sqlite-training';
+import { useSessionsEnriched } from '../../../lib/hooks/use-sqlite-training';
 
 const FONT = {
   mono: Platform.OS === 'ios' ? 'Menlo-Regular' : 'monospace',
@@ -11,37 +11,83 @@ const FONT = {
   heavy: Platform.OS === 'ios' ? 'AvenirNext-Heavy' : 'sans-serif-medium',
 } as const;
 
+const ACCENT: Record<string, string> = {
+  green: '#4AC18D',
+  blue: '#4A9CD2',
+  gold: '#D2B15C',
+  orange: '#DE6E63',
+};
+
+function extractIsoDate(sessionId: string): string | null {
+  return sessionId.match(/session-(\d{4}-\d{2}-\d{2})/)?.[1] ?? null;
+}
+
+function isWithinDays(sessionId: string, days: number): boolean {
+  const iso = extractIsoDate(sessionId);
+  if (iso == null) return false;
+  const sessionMs = new Date(iso).getTime();
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  return sessionMs >= cutoff;
+}
+
 export default function HistoryScreen() {
-  const { rows: sessions, loading, error } = useSessions();
+  const { rows: sessions, loading, error } = useSessionsEnriched();
+
+  const summary = useMemo(() => {
+    const total = sessions.length;
+    const thisWeek = sessions.filter((s) => isWithinDays(s.id, 7)).length;
+    const totalShots = sessions.reduce((acc, s) => {
+      const n = Number.parseInt(s.shots_label, 10);
+      return acc + (Number.isFinite(n) ? n : 0);
+    }, 0);
+    return { total, thisWeek, totalShots };
+  }, [sessions]);
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
         <Text style={s.eyebrow}>History</Text>
-        <Text style={s.title}>Vergangene Sessions schnell lesen</Text>
+        <Text style={s.title}>Vergangene Sessions</Text>
         <Text style={s.subtitle}>
           Chronologisch, knapp und vergleichbar. Nicht jeder Schlag, sondern erst die Muster.
         </Text>
 
         <View style={s.summaryRow}>
-          <SummaryCard label="Sessions" value="14" />
-          <SummaryCard label="Diese Woche" value="3" />
-          <SummaryCard label="Trend" value="AoA besser" />
+          <SummaryCard label="Sessions" value={String(summary.total)} />
+          <SummaryCard label="Diese Woche" value={String(summary.thisWeek)} />
+          <SummaryCard label="Schläge gesamt" value={String(summary.totalShots)} />
         </View>
 
         {loading && <Text style={s.infoText}>Lade Sessions…</Text>}
         {error != null && <Text style={s.errorText}>{error}</Text>}
 
         {sessions.map((session) => (
-          <Pressable key={session.id} style={s.sessionCard} onPress={() => router.push(`/history/${session.id}`)}>
+          <Pressable
+            key={session.id}
+            style={({ pressed }) => [s.sessionCard, pressed && s.sessionCardPressed]}
+            onPress={() => router.push(`/history/${session.id}`)}
+          >
             <Text style={s.sessionDate}>{session.date}</Text>
             <View style={s.sessionBody}>
               <Text style={s.sessionTitle}>{session.title}</Text>
-              <Text style={s.sessionMeta}>{session.shots_label}</Text>
-              <Text style={s.sessionCarry}>{session.carry_label}</Text>
+              <Text style={s.sessionMeta}>
+                {session.shots_label}
+                {session.carry_label.length > 1 ? ` · ${session.carry_label}` : ''}
+              </Text>
+              {session.club_names.length > 0 && (
+                <Text style={s.sessionClubs}>{session.club_names}</Text>
+              )}
+              {session.summary.length > 0 && (
+                <Text style={s.sessionSummary}>{session.summary}</Text>
+              )}
             </View>
+            <Text style={s.chevron}>›</Text>
           </Pressable>
         ))}
+
+        {!loading && sessions.length === 0 && error == null && (
+          <Text style={s.infoText}>Noch keine Sessions aufgezeichnet.</Text>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -90,10 +136,10 @@ const s = StyleSheet.create({
     borderRadius: 18,
     padding: 12,
   },
-  infoText: { fontFamily: FONT.body, color: '#8DA0B3', fontSize: 14, marginBottom: 12 },
-  errorText: { fontFamily: FONT.body, color: '#DE6E63', fontSize: 14, marginBottom: 12 },
   summaryLabel: { fontFamily: FONT.body, color: '#8DA0B3', fontSize: 11, marginBottom: 4 },
   summaryValue: { fontFamily: FONT.demi, color: '#EEF3F7', fontSize: 16 },
+  infoText: { fontFamily: FONT.body, color: '#8DA0B3', fontSize: 14, marginBottom: 12 },
+  errorText: { fontFamily: FONT.body, color: '#DE6E63', fontSize: 14, marginBottom: 12 },
   sessionCard: {
     backgroundColor: '#0D1821',
     borderWidth: 1,
@@ -103,7 +149,9 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     gap: 14,
     marginBottom: 12,
+    alignItems: 'flex-start',
   },
+  sessionCardPressed: { opacity: 0.7 },
   sessionDate: {
     fontFamily: FONT.mono,
     color: '#D2B15C',
@@ -111,8 +159,16 @@ const s = StyleSheet.create({
     width: 52,
     marginTop: 2,
   },
-  sessionBody: { flex: 1 },
-  sessionTitle: { fontFamily: FONT.demi, color: '#EEF3F7', fontSize: 18, marginBottom: 5 },
-  sessionMeta: { fontFamily: FONT.body, color: '#8DA0B3', fontSize: 13, marginBottom: 2 },
-  sessionCarry: { fontFamily: FONT.body, color: '#53677A', fontSize: 13 },
+  sessionBody: { flex: 1, gap: 3 },
+  sessionTitle: { fontFamily: FONT.demi, color: '#EEF3F7', fontSize: 17, marginBottom: 2 },
+  sessionMeta: { fontFamily: FONT.body, color: '#8DA0B3', fontSize: 13 },
+  sessionClubs: { fontFamily: FONT.demi, color: '#D2B15C', fontSize: 13 },
+  sessionSummary: { fontFamily: FONT.body, color: '#53677A', fontSize: 12, lineHeight: 17 },
+  chevron: {
+    color: '#3A5068',
+    fontSize: 22,
+    fontFamily: FONT.body,
+    alignSelf: 'center',
+    marginLeft: 4,
+  },
 });
