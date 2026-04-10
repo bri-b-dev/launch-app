@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '../../../lib/hooks/use-auth';
 
 const FONT = {
   mono: Platform.OS === 'ios' ? 'Menlo-Regular' : 'monospace',
@@ -17,6 +18,8 @@ const SETTINGS = [
 ];
 
 export default function SettingsScreen() {
+  const { user, signOut } = useAuth();
+
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
@@ -32,6 +35,13 @@ export default function SettingsScreen() {
             <Text style={s.settingBody}>{item.body}</Text>
           </View>
         ))}
+
+        <View style={s.accountCard}>
+          <Text style={s.accountEmail}>{user?.email}</Text>
+          <Pressable style={s.signOutButton} onPress={signOut}>
+            <Text style={s.signOutText}>Sign out</Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -72,4 +82,24 @@ const s = StyleSheet.create({
   },
   settingTitle: { fontFamily: FONT.demi, color: '#EEF3F7', fontSize: 18, marginBottom: 6 },
   settingBody: { fontFamily: FONT.body, color: '#8DA0B3', fontSize: 14, lineHeight: 20 },
+  accountCard: {
+    backgroundColor: '#0D1821',
+    borderWidth: 1,
+    borderColor: '#223244',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 12,
+    gap: 12,
+  },
+  accountEmail: { fontFamily: FONT.body, color: '#8DA0B3', fontSize: 14 },
+  signOutButton: {
+    height: 44,
+    borderWidth: 1,
+    borderColor: '#3A2020',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1A0E0E',
+  },
+  signOutText: { fontFamily: FONT.demi, color: '#E05C5C', fontSize: 14 },
 });
