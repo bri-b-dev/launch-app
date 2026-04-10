@@ -72,6 +72,8 @@ export async function initializeDatabase(db: SQLiteDatabase): Promise<void> {
   await ensureColumn(db, 'clubs', 'manufacturer', "TEXT NOT NULL DEFAULT ''");
   await ensureColumn(db, 'clubs', 'model', "TEXT NOT NULL DEFAULT ''");
   await ensureColumn(db, 'clubs', 'archived', 'INTEGER NOT NULL DEFAULT 0');
+  await ensureColumn(db, 'shots', 'video_path', 'TEXT');
+  await ensureColumn(db, 'shots', 'video_url', 'TEXT');
 
   const existing = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM clubs');
   if ((existing?.count ?? 0) > 0) {
