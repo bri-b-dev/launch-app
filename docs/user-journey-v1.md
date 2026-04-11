@@ -4,31 +4,31 @@ Stand: 2026-04-11
 
 ## Ziel
 
-Diese User Journey beschreibt den Kernfluss der App fuer Phase 1 und Phase 2:
+Diese User Journey beschreibt den Kernfluss der App für Phase 1 und Phase 2:
 
 - Phase 1: Auth, Equipment, Mevo+-Verbindung, Session-Start, Shot Capture, Live-Dashboard, lokale Speicherung
-- Phase 2: Zielbereiche pro Schlaeger, Session-Analyse, Dispersion, Historie, Trends
+- Phase 2: Zielbereiche pro Schläger, Session-Analyse, Dispersion, Historie, Trends
 
-Die Journey bildet bewusst nur den aktuellen MVP- und Analyse-Scope ab. Video-Features aus spaeteren Phasen sind nicht enthalten.
+Die Journey bildet bewusst nur den aktuellen MVP- und Analyse-Scope ab. Video-Features aus späteren Phasen sind nicht enthalten.
 
 ## Hauptperson
 
 **Bri**
 
 - ambitionierte Golferin
-- trainiert gezielt statt nur Baelle zu schlagen
+- trainiert gezielt statt nur Bälle zu schlagen
 - spielt Draw-Bias
 - will eigenes Feedback auf Basis von Mevo+-Daten statt nur Standardauswertung
-- moechte Training offline-first und ohne Cloud-Abhaengigkeit nutzen
+- möchte Training offline-first und ohne Cloud-Abhängigkeit nutzen
 
 ## Kernversprechen der App
 
-Die App begleitet Bri von der Geraeteverbindung bis zur Analyse einer Trainingssession:
+Die App begleitet Bri von der Geräteverbindung bis zur Analyse einer Trainingssession:
 
 1. Setup in wenigen Schritten
-2. Schlaege live sehen und sauber speichern
+2. Schläge live sehen und sauber speichern
 3. Eigene Zielkorridore statt generischer Kennzahlen nutzen
-4. Session direkt auswerten und ueber Zeit vergleichen
+4. Session direkt auswerten und über Zeit vergleichen
 
 ## User Journey
 
@@ -36,11 +36,11 @@ Die App begleitet Bri von der Geraeteverbindung bis zur Analyse einer Trainingss
 
 **Situation**
 
-Bri installiert die App auf einem Android-Geraet und oeffnet sie vor dem Training.
+Bri installiert die App auf einem Android-Gerät und öffnet sie vor dem Training.
 
 **Ziel der Nutzerin**
 
-Moeglichst schnell in die App kommen, ohne technische Huerden.
+Möglichst schnell in die App kommen, ohne technische Hürden.
 
 **Flow**
 
@@ -56,34 +56,34 @@ Moeglichst schnell in die App kommen, ohne technische Huerden.
 
 **Produktnutzen**
 
-Auth schafft die Grundlage fuer persoenliche Daten, Clubs, Sessions und spaeteren Sync.
+Auth schafft die Grundlage für persönliche Daten, Clubs, Sessions und späteren Sync.
 
 ### 2. Equipment einrichten
 
 **Situation**
 
-Vor dem ersten sinnvollen Training muss Bri ihre Schlaeger pflegen.
+Vor dem ersten sinnvollen Training muss Bri ihre Schläger pflegen.
 
 **Ziel der Nutzerin**
 
-Jeder Schlag soll spaeter einem Schlaeger zugeordnet werden koennen.
+Jeder Schlag soll später einem Schläger zugeordnet werden können.
 
 **Flow**
 
-1. Bri oeffnet den Equipment-Bereich.
-2. Sie legt ihre Schlaeger an, z. B. 7-Wood, Eisen, Wedges.
+1. Bri öffnet den Equipment-Bereich.
+2. Sie legt ihre Schläger an, z. B. 7-Wood, Eisen, Wedges.
 3. Sie hinterlegt Name, Typ und Loft.
-4. Die App speichert die Schlaeger lokal und macht sie fuer Sessions verfuegbar.
+4. Die App speichert die Schläger lokal und macht sie für Sessions verfügbar.
 
 **Erwartung der Nutzerin**
 
 - schneller CRUD-Flow
 - keine redundanten Eingaben vor jeder Session
-- saubere Club-Auswahl waehrend des Trainings
+- saubere Club-Auswahl während des Trainings
 
 **Produktnutzen**
 
-Das Equipment ist die Basis fuer clubbezogene Statistiken, Zielbereiche und Verlaufsdaten.
+Das Equipment ist die Basis für clubbezogene Statistiken, Zielbereiche und Verlaufsdaten.
 
 ### 3. Launch Monitor verbinden
 
@@ -93,20 +93,20 @@ Bri ist auf der Range und will mit dem Mevo+ trainieren.
 
 **Ziel der Nutzerin**
 
-Eine stabile Verbindung, ohne sich mit Netzwerkdetails beschaeftigen zu muessen.
+Eine stabile Verbindung, ohne sich mit Netzwerkdetails beschäftigen zu müssen.
 
 **Flow**
 
-1. Bri oeffnet die App im Trainingskontext.
-2. Die App verbindet sich mit dem Mevo+ ueber TCP.
-3. Das Geraet wird konfiguriert und fuer Schlaege scharf geschaltet.
+1. Bri öffnet die App im Trainingskontext.
+2. Die App verbindet sich mit dem Mevo+ über TCP.
+3. Das Gerät wird konfiguriert und für Schläge scharf geschaltet.
 4. Der Verbindungsstatus ist sichtbar.
 5. Bei Problemen bekommt Bri klares Feedback und kann erneut verbinden.
 
 **Erwartung der Nutzerin**
 
 - sichtbarer Status: verbunden, bereit, getrennt
-- keine Unsicherheit, ob Schlaege erfasst werden
+- keine Unsicherheit, ob Schläge erfasst werden
 - schneller Retry bei Verbindungsabbruch
 
 **Produktnutzen**
@@ -121,30 +121,30 @@ Die Verbindung steht, jetzt beginnt das eigentliche Training.
 
 **Ziel der Nutzerin**
 
-Eine Session sauber starten, um zusammenhaengende Schlaege gesammelt auszuwerten.
+Eine Session sauber starten, um zusammenhängende Schläge gesammelt auszuwerten.
 
 **Flow**
 
 1. Bri startet eine neue Session.
-2. Sie waehlt den aktiven Schlaeger.
+2. Sie wählt den aktiven Schläger.
 3. Die App legt lokal eine Session an.
 4. Das Live-Dashboard wird zur zentralen Trainingsansicht.
 
 **Erwartung der Nutzerin**
 
-- klarer Startpunkt fuer eine Trainingseinheit
-- sofort sichtbarer aktiver Schlaeger
+- klarer Startpunkt für eine Trainingseinheit
+- sofort sichtbarer aktiver Schläger
 - keine Datenverluste bei App-Neustart oder Offline-Nutzung
 
 **Produktnutzen**
 
-Sessions strukturieren das Training und machen spaetere Auswertung erst sinnvoll.
+Sessions strukturieren das Training und machen spätere Auswertung erst sinnvoll.
 
 ### 5. Schlag erfassen und live verstehen
 
 **Situation**
 
-Bri schlaegt Baelle und will direkt nach jedem Schlag wissen, was passiert ist.
+Bri schlägt Bälle und will direkt nach jedem Schlag wissen, was passiert ist.
 
 **Ziel der Nutzerin**
 
@@ -152,18 +152,18 @@ Sofortiges, relevantes Feedback pro Schlag.
 
 **Flow**
 
-1. Bri schlaegt.
-2. Kurz nach Impact empfaengt die App das Shot-Event vom Mevo+.
+1. Bri schlägt.
+2. Kurz nach Impact empfängt die App das Shot-Event vom Mevo+.
 3. Die App parst Ball-, Club- und gegebenenfalls Face-Impact-Daten.
 4. Der letzte Schlag wird prominent im Dashboard angezeigt.
-5. Der Schlag wird der laufenden Session und dem aktiven Schlaeger zugeordnet.
+5. Der Schlag wird der laufenden Session und dem aktiven Schläger zugeordnet.
 6. Der Datensatz wird lokal in SQLite gespeichert.
 
 **Erwartung der Nutzerin**
 
 - niedrige Latenz zwischen Schlag und Feedback
 - klare Darstellung der wichtigsten Kennzahlen
-- sichtbarer Hinweis, wenn Spin nur geschaetzt ist
+- sichtbarer Hinweis, wenn Spin nur geschätzt ist
 - Vertrauen, dass kein Schlag verloren geht
 
 **Produktnutzen**
@@ -178,51 +178,51 @@ Nach der Basiserfassung will Bri nicht nur Werte sehen, sondern beurteilen, ob d
 
 **Ziel der Nutzerin**
 
-Eigene Sollbereiche pro Schlaeger und Kennzahl definieren.
+Eigene Sollbereiche pro Schläger und Kennzahl definieren.
 
 **Flow**
 
-1. Bri hinterlegt pro Schlaeger Zielbereiche, z. B. fuer Carry, Spin, AoA oder Face-to-Path.
+1. Bri hinterlegt pro Schläger Zielbereiche, z. B. für Carry, Spin, AoA oder Face-to-Path.
 2. Die App speichert Minimum- und Maximum-Werte pro Metrik.
-3. Bei neuen Schlaegen vergleicht die App Live-Daten mit dem Zielkorridor.
+3. Bei neuen Schlägen vergleicht die App Live-Daten mit dem Zielkorridor.
 4. Werte werden visuell als getroffen oder verfehlt markiert.
 
 **Erwartung der Nutzerin**
 
-- persoenliches Feedback statt Standardnormen
-- schnelle visuelle Einordnung waehrend des Trainings
-- klare Koppelung zwischen Schlaeger und Zielwerten
+- persönliches Feedback statt Standardnormen
+- schnelle visuelle Einordnung während des Trainings
+- klare Koppelung zwischen Schläger und Zielwerten
 
 **Produktnutzen**
 
-Hier beginnt der eigentliche Mehrwert gegenueber einer reinen Launch-Monitor-Anzeige: Die App wird zum Trainingssystem.
+Hier beginnt der eigentliche Mehrwert gegenüber einer reinen Launch-Monitor-Anzeige: Die App wird zum Trainingssystem.
 
 ### 7. Session direkt analysieren
 
 **Situation**
 
-Nach einigen Schlaegen will Bri erkennen, ob sie Fortschritt macht oder nur einzelne gute Treffer hatte.
+Nach einigen Schlägen will Bri erkennen, ob sie Fortschritt macht oder nur einzelne gute Treffer hatte.
 
 **Ziel der Nutzerin**
 
-Eine kompakte Session-Auswertung direkt nach oder waehrend des Trainings.
+Eine kompakte Session-Auswertung direkt nach oder während des Trainings.
 
 **Flow**
 
-1. Bri oeffnet die Session-Ansicht oder Historien-Details.
+1. Bri öffnet die Session-Ansicht oder Historien-Details.
 2. Die App zeigt Durchschnittswerte, Streuung und Zieltrefferquote.
-3. Die Daten koennen pro Session und pro Schlaeger betrachtet werden.
+3. Die Daten können pro Session und pro Schläger betrachtet werden.
 4. Bri erkennt, ob die Session stabil war oder stark schwankte.
 
 **Erwartung der Nutzerin**
 
-- wenige, aussagekraeftige Kennzahlen
+- wenige, aussagekräftige Kennzahlen
 - Vergleichbarkeit innerhalb der Session
-- schneller Ueberblick ohne Excel-Export
+- schneller Überblick ohne Excel-Export
 
 **Produktnutzen**
 
-Die Session wird von einer Liste einzelner Schlaege zu einer interpretierbaren Trainingseinheit.
+Die Session wird von einer Liste einzelner Schläge zu einer interpretierbaren Trainingseinheit.
 
 ### 8. Dispersion visuell verstehen
 
@@ -236,9 +236,9 @@ Treffbild intuitiv verstehen.
 
 **Flow**
 
-1. Bri oeffnet die Dispersionsansicht.
-2. Die App uebertraegt Carry und Horizontal Launch in eine grafische Landepunkt-Ansicht.
-3. Mehrere Schlaege erscheinen als Muster statt als Einzeldaten.
+1. Bri öffnet die Dispersionsansicht.
+2. Die App überträgt Carry und Horizontal Launch in eine grafische Landepunkt-Ansicht.
+3. Mehrere Schläge erscheinen als Muster statt als Einzeldaten.
 4. Bri erkennt direkt Push, Pull, Draw-Muster oder breite Streuung.
 
 **Erwartung der Nutzerin**
@@ -249,13 +249,13 @@ Treffbild intuitiv verstehen.
 
 **Produktnutzen**
 
-Dispersion macht Schwankungen und Schlagmuster intuitiv sichtbar und unterstuetzt zielgerichtetes Range-Training.
+Dispersion macht Schwankungen und Schlagmuster intuitiv sichtbar und unterstützt zielgerichtetes Range-Training.
 
 ### 9. Trainingshistorie nutzen
 
 **Situation**
 
-Bri trainiert regelmaessig und will spaetere Sessions wiederfinden.
+Bri trainiert regelmässig und will spätere Sessions wiederfinden.
 
 **Ziel der Nutzerin**
 
@@ -263,10 +263,10 @@ Vergangene Einheiten nachvollziehen und mit neuen Sessions vergleichen.
 
 **Flow**
 
-1. Bri oeffnet die Historie.
-2. Sie sieht Sessions chronologisch mit Datum, Schlaganzahl, Schlaegerbezug und Durchschnittswerten.
-3. Sie oeffnet eine Session im Detail.
-4. Die App zeigt die gespeicherten Schlaege und die zugehoerige Analyse.
+1. Bri öffnet die Historie.
+2. Sie sieht Sessions chronologisch mit Datum, Schlaganzahl, Schlägerbezug und Durchschnittswerten.
+3. Sie öffnet eine Session im Detail.
+4. Die App zeigt die gespeicherten Schläge und die zugehörige Analyse.
 
 **Erwartung der Nutzerin**
 
@@ -276,54 +276,54 @@ Vergangene Einheiten nachvollziehen und mit neuen Sessions vergleichen.
 
 **Produktnutzen**
 
-Historie schafft Kontinuitaet und macht Training langfristig nutzbar statt nur im Moment.
+Historie schafft Kontinuität und macht Training langfristig nutzbar statt nur im Moment.
 
-### 10. Trends ueber mehrere Sessions erkennen
+### 10. Trends über mehrere Sessions erkennen
 
 **Situation**
 
-Bri arbeitet an ihrem Schwung und will wissen, ob sich Aenderungen ueber Wochen wirklich auszahlen.
+Bri arbeitet an ihrem Schwung und will wissen, ob sich Änderungen über Wochen wirklich auszahlen.
 
 **Ziel der Nutzerin**
 
-Entwicklung ueber Zeit sehen, nicht nur Momentaufnahmen.
+Entwicklung über Zeit sehen, nicht nur Momentaufnahmen.
 
 **Flow**
 
-1. Bri waehlt einen Schlaeger oder eine relevante Kennzahl.
-2. Die App aggregiert Session-Werte ueber mehrere Trainings.
+1. Bri wählt einen Schläger oder eine relevante Kennzahl.
+2. Die App aggregiert Session-Werte über mehrere Trainings.
 3. Trend-Charts zeigen z. B. Carry, Ball Speed oder Zieltrefferquote im Verlauf.
 4. Bri erkennt, ob sich Muster stabil verbessern, verschlechtern oder stagnieren.
 
 **Erwartung der Nutzerin**
 
-- nachvollziehbare Entwicklung statt Bauchgefuehl
+- nachvollziehbare Entwicklung statt Bauchgefühl
 - Fortschritt sichtbar machen
-- Rueckschritte frueh erkennen
+- Rückschritte früh erkennen
 
 **Produktnutzen**
 
-Die App unterstuetzt nicht nur Schlagdiagnose, sondern echtes Trainingsmanagement.
+Die App unterstützt nicht nur Schlagdiagnose, sondern echtes Trainingsmanagement.
 
 ## Erfolgsbild nach Phase 2
 
-Am Ende von Phase 2 ist die App fuer Bri nicht nur ein Datensammler, sondern ein komplettes Trainingswerkzeug:
+Am Ende von Phase 2 ist die App für Bri nicht nur ein Datensammler, sondern ein komplettes Trainingswerkzeug:
 
 - Sie verbindet sich mit dem Mevo+ und startet schnell eine Session.
-- Sie sieht Schlaege live und bekommt verlassliche Kennzahlen.
-- Sie bewertet Schlaege gegen eigene Zielkorridore.
+- Sie sieht Schläge live und bekommt verlassliche Kennzahlen.
+- Sie bewertet Schläge gegen eigene Zielkorridore.
 - Sie analysiert Sessions direkt nach dem Training.
-- Sie erkennt Streuung, Muster und Entwicklung ueber die Zeit.
+- Sie erkennt Streuung, Muster und Entwicklung über die Zeit.
 
 ## Zentrale UX-Anforderungen aus der Journey
 
-- Verbindung und Bereitschaft muessen jederzeit eindeutig sichtbar sein.
+- Verbindung und Bereitschaft müssen jederzeit eindeutig sichtbar sein.
 - Der Weg von App-Start zu erstem erfassten Schlag muss kurz sein.
-- Der aktive Schlaeger muss im Trainingsfluss klar erkennbar sein.
-- Live-Feedback muss priorisiert werden, nicht Menues oder Nebendaten.
-- Zielbereiche muessen leicht pflegbar und pro Schlaeger eindeutig sein.
-- Session-Analyse muss schnell erfassbar sein, nicht ueberladen.
-- Historie und Trends muessen auf echte Trainingsentscheidungen einzahlen.
+- Der aktive Schläger muss im Trainingsfluss klar erkennbar sein.
+- Live-Feedback muss priorisiert werden, nicht Menüs oder Nebendaten.
+- Zielbereiche müssen leicht pflegbar und pro Schläger eindeutig sein.
+- Session-Analyse muss schnell erfassbar sein, nicht überladen.
+- Historie und Trends müssen auf echte Trainingsentscheidungen einzahlen.
 
 ## Abgrenzung
 

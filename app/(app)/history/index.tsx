@@ -58,6 +58,14 @@ export default function HistoryScreen() {
           <SummaryCard label="Schläge gesamt" value={String(summary.totalShots)} />
         </View>
 
+        <Pressable
+          style={({ pressed }) => [s.trendButton, pressed && s.trendButtonPressed]}
+          onPress={() => router.push('/history/trends')}
+        >
+          <Text style={s.trendButtonLabel}>Trend-Übersicht</Text>
+          <Text style={s.trendButtonArrow}>›</Text>
+        </Pressable>
+
         {loading && <Text style={s.infoText}>Lade Sessions…</Text>}
         {error != null && <Text style={s.errorText}>{error}</Text>}
 
@@ -138,6 +146,29 @@ const s = StyleSheet.create({
   },
   summaryLabel: { fontFamily: FONT.body, color: '#8DA0B3', fontSize: 11, marginBottom: 4 },
   summaryValue: { fontFamily: FONT.demi, color: '#EEF3F7', fontSize: 16 },
+  trendButton: {
+    backgroundColor: '#0D1821',
+    borderWidth: 1,
+    borderColor: '#D2B15C44',
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  trendButtonPressed: { opacity: 0.7 },
+  trendButtonLabel: {
+    fontFamily: FONT.demi,
+    color: '#D2B15C',
+    fontSize: 15,
+  },
+  trendButtonArrow: {
+    color: '#D2B15C',
+    fontSize: 22,
+    fontFamily: FONT.body,
+  },
   infoText: { fontFamily: FONT.body, color: '#8DA0B3', fontSize: 14, marginBottom: 12 },
   errorText: { fontFamily: FONT.body, color: '#DE6E63', fontSize: 14, marginBottom: 12 },
   sessionCard: {

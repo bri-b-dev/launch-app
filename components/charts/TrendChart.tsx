@@ -6,9 +6,9 @@ import type { DbClubSessionStat } from '../../lib/hooks/use-sqlite-training';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type MetricKey = 'avg_carry' | 'avg_ball_speed' | 'hit_rate_pct';
+export type MetricKey = 'avg_carry' | 'avg_ball_speed' | 'hit_rate_pct';
 
-interface MetricDef {
+export interface MetricDef {
   key: MetricKey;
   label: string;
   unit: string;
@@ -17,6 +17,8 @@ interface MetricDef {
 
 interface TrendChartProps {
   sessions: DbClubSessionStat[];
+  /** When provided, renders in controlled mode — no tab selector shown */
+  metric?: MetricKey;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -27,7 +29,7 @@ const FONT = {
   demi: Platform.OS === 'ios' ? 'AvenirNext-DemiBold' : 'sans-serif-medium',
 } as const;
 
-const METRICS: MetricDef[] = [
+export const METRICS: MetricDef[] = [
   { key: 'avg_carry', label: 'Ø Carry', unit: 'y', color: '#D2B15C' },
   { key: 'avg_ball_speed', label: 'Ball Speed', unit: 'mph', color: '#4AC18D' },
   { key: 'hit_rate_pct', label: 'Treffer', unit: '%', color: '#818CF8' },
@@ -66,8 +68,9 @@ function trendColor(first: number, last: number): string {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function TrendChart({ sessions }: TrendChartProps) {
-  const [activeMetric, setActiveMetric] = useState<MetricKey>('avg_carry');
+export function TrendChart({ sessions, metric: controlledMetric }: TrendChartProps) {
+  const [internalMetric, setInternalMetric] = useState<MetricKey>('avg_carry');
+  const activeMetric = controlledMetric ?? internalMetric;
 
   const metric = METRICS.find((m) => m.key === activeMetric)!;
 
@@ -97,20 +100,22 @@ export function TrendChart({ sessions }: TrendChartProps) {
 
   return (
     <View style={s.container}>
-      {/* Metric selector */}
-      <View style={s.tabs}>
-        {METRICS.map((m) => (
-          <Pressable
-            key={m.key}
-            style={[s.tab, activeMetric === m.key && { borderColor: m.color, backgroundColor: `${m.color}18` }]}
-            onPress={() => setActiveMetric(m.key)}
-          >
-            <Text style={[s.tabText, activeMetric === m.key && { color: m.color }]}>
-              {m.label}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      {/* Metric selector — hidden in controlled mode */}
+      {controlledMetric == null && (
+        <View style={s.tabs}>
+          {METRICS.map((m) => (
+            <Pressable
+              key={m.key}
+              style={[s.tab, activeMetric === m.key && { borderColor: m.color, backgroundColor: `${m.color}18` }]}
+              onPress={() => setInternalMetric(m.key)}
+            >
+              <Text style={[s.tabText, activeMetric === m.key && { color: m.color }]}>
+                {m.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
 
       {!hasTrend ? (
         <View style={s.empty}>

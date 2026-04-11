@@ -68,7 +68,7 @@ FIL (`hasFaceImpact`): `faceImpactX`, `faceImpactY`
 Phase 1 vollständig abgeschlossen. Phase 2 weitgehend done.
 
 **Phase 2 — Offene Punkte:**
-- [ ] Trend-Übersicht: dedizierter Screen mit Schläger-Selektor + Metrik-Mehrfachauswahl fehlt (TrendChart-Komponente und Hook sind fertig)
+- [x] Trend-Übersicht: `app/(app)/history/trends.tsx` mit Schläger-Selektor (horizontale Chips) + Metrik-Mehrfachauswahl (Toggle-Chips), Einstieg via History-Tab
 
 **Offene Hardware-TODOs (Phase 1 carry-over):**
 - [ ] Protokoll-Byte-Offsets mit echtem Gerät verifizieren (besonders FIL-Felder)

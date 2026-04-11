@@ -48,7 +48,7 @@ export default function SettingsScreen() {
         <Text style={s.eyebrow}>Settings</Text>
         <Text style={s.title}>Technik ruhig halten, Training schnell halten</Text>
         <Text style={s.subtitle}>
-          Keine ueberladene Konfigurationsseite, sondern wenige systemische Einstellungen mit direktem Bezug zum Training.
+          Keine überladene Konfigurationsseite, sondern wenige systemische Einstellungen mit direktem Bezug zum Training.
         </Text>
 
         {PLACEHOLDER_SETTINGS.map((item) => (
