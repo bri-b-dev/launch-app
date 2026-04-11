@@ -189,7 +189,7 @@ export function MevoSessionProvider({ children }: Readonly<{ children: React.Rea
 }
 
 function LiveMevoSessionProvider({ children }: Readonly<{ children: React.ReactNode }>) {
-  const { activeClubId } = useTrainingState();
+  const { activeClubId, activeSessionId } = useTrainingState();
   const liveMevo = useMevo();
   const mevo = {
     state: liveMevo.state,
@@ -205,11 +205,12 @@ function LiveMevoSessionProvider({ children }: Readonly<{ children: React.ReactN
   const lastPersistedSignature = useRef<string | null>(null);
 
   useEffect(() => {
-    if (mevo.lastShot == null) {
+    if (mevo.lastShot == null || activeSessionId == null) {
       return;
     }
 
     const signature = JSON.stringify({
+      sessionId: activeSessionId,
       clubId: activeClubId,
       carry: mevo.lastShot.carryDistanceYards,
       spinAxis: mevo.lastShot.spinAxis,
@@ -223,11 +224,11 @@ function LiveMevoSessionProvider({ children }: Readonly<{ children: React.ReactN
     }
 
     lastPersistedSignature.current = signature;
-    persistShot(activeClubId, mevo.lastShot).catch((err) => {
+    persistShot(activeClubId, mevo.lastShot, activeSessionId).catch((err) => {
       console.error('[Mevo] Shot-Persistenz fehlgeschlagen:', err);
       lastPersistedSignature.current = null;
     });
-  }, [activeClubId, mevo.lastShot, persistShot]);
+  }, [activeClubId, activeSessionId, mevo.lastShot, persistShot]);
 
   const value = useMemo(() => mevo, [mevo]);
 
@@ -239,17 +240,18 @@ function LiveMevoSessionProvider({ children }: Readonly<{ children: React.ReactN
 }
 
 function MockMevoSessionProvider({ children }: Readonly<{ children: React.ReactNode }>) {
-  const { activeClubId } = useTrainingState();
+  const { activeClubId, activeSessionId } = useTrainingState();
   const mevo = useMockMevo(activeClubId);
   const { persistShot } = useShotCapture();
   const lastPersistedSignature = useRef<string | null>(null);
 
   useEffect(() => {
-    if (mevo.lastShot == null) {
+    if (mevo.lastShot == null || activeSessionId == null) {
       return;
     }
 
     const signature = JSON.stringify({
+      sessionId: activeSessionId,
       clubId: activeClubId,
       carry: mevo.lastShot.carryDistanceYards,
       spinAxis: mevo.lastShot.spinAxis,
@@ -263,11 +265,11 @@ function MockMevoSessionProvider({ children }: Readonly<{ children: React.ReactN
     }
 
     lastPersistedSignature.current = signature;
-    persistShot(activeClubId, mevo.lastShot).catch((err) => {
+    persistShot(activeClubId, mevo.lastShot, activeSessionId).catch((err) => {
       console.error('[Mevo] Shot-Persistenz fehlgeschlagen:', err);
       lastPersistedSignature.current = null;
     });
-  }, [activeClubId, mevo.lastShot, persistShot]);
+  }, [activeClubId, activeSessionId, mevo.lastShot, persistShot]);
 
   const value = useMemo(() => mevo, [mevo]);
 

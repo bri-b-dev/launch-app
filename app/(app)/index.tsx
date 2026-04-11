@@ -17,7 +17,7 @@ import { router } from 'expo-router';
 import type { Href } from 'expo-router';
 import type { ConnectionState } from '../../lib/types/shot';
 import { useTrainingState } from '../../lib/hooks/use-training-state';
-import { useClubs, useClubShots, useMargins } from '../../lib/hooks/use-sqlite-training';
+import { type DbClub, useClubs, useClubShots, useMargins } from '../../lib/hooks/use-sqlite-training';
 import { useMevoSession } from '../../lib/hooks/use-mevo-session';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -110,7 +110,7 @@ export default function DashboardScreen() {
     disconnect,
     isMock,
   } = useMevoSession();
-  const { activeClubId } = useTrainingState();
+  const { activeClubId, setActiveClubId, activeSessionId, startSession, endSession } = useTrainingState();
   const { rows: clubs } = useClubs();
   const activeClub = clubs.find((club) => club.id === activeClubId) ?? clubs[0] ?? null;
   const { rows: targets } = useMargins(activeClub?.id ?? null);
@@ -164,6 +164,10 @@ export default function DashboardScreen() {
       handleActionError('Trennen', err);
     }
   }, [disconnect, handleActionError]);
+
+  const handleStartSession = useCallback(() => {
+    startSession(activeClubId);
+  }, [activeClubId, startSession]);
 
   // Session-Metadaten kommen in Phase 1 aus useSession()
   const sessionClub = activeClub?.name ?? 'Club lädt…';
@@ -244,8 +248,16 @@ export default function DashboardScreen() {
             <Text style={[s.statusText, { color: statusColor }]}>{statusLabel}</Text>
           </View>
           <View style={s.sessionMeta}>
-            <Text style={s.sessionClub}>{sessionClub}</Text>
-            <Text style={s.sessionShots}>{shotCount} Schläge</Text>
+            {activeSessionId != null ? (
+              <>
+                <Text style={s.sessionClub}>{sessionClub}</Text>
+                <Pressable onPress={endSession} hitSlop={8}>
+                  <Text style={s.sessionEndBtn}>Beenden</Text>
+                </Pressable>
+              </>
+            ) : (
+              <Text style={s.sessionNoSession}>Keine Session</Text>
+            )}
           </View>
         </View>
 
@@ -259,7 +271,14 @@ export default function DashboardScreen() {
         )}
 
         {/* ── Hero ─────────────────────────────────────────────────── */}
-        {lastShot == null ? (
+        {activeSessionId == null ? (
+          <SessionStartPanel
+            clubs={clubs}
+            activeClubId={activeClubId}
+            onSelectClub={setActiveClubId}
+            onStart={handleStartSession}
+          />
+        ) : lastShot == null ? (
           <EmptyState state={state} onConnect={safeConnect} />
         ) : (
           <Animated.View
@@ -285,7 +304,7 @@ export default function DashboardScreen() {
         )}
 
         {/* ── Metrics grid ────────────────────────────────────────── */}
-        {lastShot != null && (
+        {activeSessionId != null && lastShot != null && (
           <Animated.View
             style={[
               s.metricsWrap,
@@ -381,16 +400,61 @@ export default function DashboardScreen() {
         </View>
 
         {/* ── CTA ─────────────────────────────────────────────────── */}
-        <Pressable
-          style={({ pressed }: { pressed: boolean }) => [s.cta, pressed && s.ctaPressed]}
-          onPress={() => router.push('/session' as Href)}
-        >
-          <Text style={s.ctaLabel}>SESSION FORTSETZEN</Text>
-          <Text style={s.ctaArrow}>→</Text>
-        </Pressable>
+        {activeSessionId != null && (
+          <Pressable
+            style={({ pressed }: { pressed: boolean }) => [s.cta, pressed && s.ctaPressed]}
+            onPress={() => router.push('/session' as Href)}
+          >
+            <Text style={s.ctaLabel}>SESSION FORTSETZEN</Text>
+            <Text style={s.ctaArrow}>→</Text>
+          </Pressable>
+        )}
 
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SessionStartPanel
+// ---------------------------------------------------------------------------
+
+interface SessionStartPanelProps {
+  clubs: DbClub[];
+  activeClubId: string;
+  onSelectClub: (id: string) => void;
+  onStart: () => void;
+}
+
+function SessionStartPanel({ clubs, activeClubId, onSelectClub, onStart }: Readonly<SessionStartPanelProps>) {
+  return (
+    <View style={s.startPanel}>
+      <Text style={s.startEyebrow}>NEUE SESSION</Text>
+      <Text style={s.startTitle}>Schläger wählen</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.startClubRail}>
+        {clubs.map((club) => (
+          <Pressable
+            key={club.id}
+            style={[s.startClubChip, club.id === activeClubId && s.startClubChipActive]}
+            onPress={() => onSelectClub(club.id)}
+          >
+            <Text style={[s.startClubName, club.id === activeClubId && s.startClubNameActive]}>
+              {club.name}
+            </Text>
+            <Text style={[s.startClubTarget, club.id === activeClubId && s.startClubTargetActive]}>
+              {club.target}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+      <Pressable
+        style={({ pressed }: { pressed: boolean }) => [s.startBtn, pressed && s.startBtnPressed]}
+        onPress={onStart}
+      >
+        <Text style={s.startBtnLabel}>SESSION STARTEN</Text>
+        <Text style={s.startBtnArrow}>→</Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -713,11 +777,16 @@ const s = StyleSheet.create({
     color: C.text,
     letterSpacing: 0.2,
   },
-  sessionShots: {
+  sessionEndBtn: {
     fontFamily: FONT.body,
     fontSize: 12,
-    color: C.textSecondary,
+    color: C.danger,
     marginTop: 2,
+  },
+  sessionNoSession: {
+    fontFamily: FONT.body,
+    fontSize: 12,
+    color: C.textMuted,
   },
   headerBtn: {
     paddingVertical: 4,
@@ -1175,5 +1244,91 @@ const s = StyleSheet.create({
     fontSize: 14,
     color: C.success,
     letterSpacing: 0.5,
+  },
+
+  // Session start panel
+  startPanel: {
+    marginHorizontal: 16,
+    marginBottom: 14,
+    backgroundColor: C.card,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: C.goldDim,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 24,
+  },
+  startEyebrow: {
+    fontFamily: FONT.mono,
+    fontSize: 10,
+    letterSpacing: 3.5,
+    color: C.gold,
+    marginBottom: 6,
+  },
+  startTitle: {
+    fontFamily: FONT.demi,
+    fontSize: 22,
+    color: C.text,
+    marginBottom: 20,
+  },
+  startClubRail: {
+    gap: 10,
+    paddingRight: 4,
+    marginBottom: 20,
+  },
+  startClubChip: {
+    minWidth: 100,
+    backgroundColor: C.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: C.border,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  startClubChipActive: {
+    backgroundColor: C.goldGlow,
+    borderColor: C.goldDim,
+  },
+  startClubName: {
+    fontFamily: FONT.demi,
+    fontSize: 15,
+    color: C.text,
+    marginBottom: 3,
+  },
+  startClubNameActive: {
+    color: C.gold,
+  },
+  startClubTarget: {
+    fontFamily: FONT.body,
+    fontSize: 12,
+    color: C.textMuted,
+  },
+  startClubTargetActive: {
+    color: C.textSecondary,
+  },
+  startBtn: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: C.goldDim,
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    backgroundColor: C.goldGlow,
+  },
+  startBtnPressed: {
+    borderColor: C.gold,
+  },
+  startBtnLabel: {
+    fontFamily: FONT.demi,
+    fontSize: 13,
+    color: C.gold,
+    letterSpacing: 2.2,
+  },
+  startBtnArrow: {
+    fontFamily: FONT.mono,
+    fontSize: 18,
+    color: C.gold,
   },
 });

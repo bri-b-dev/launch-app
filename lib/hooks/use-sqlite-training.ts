@@ -633,7 +633,7 @@ export function useShotCapture() {
   const db = useSQLiteContext();
   const { bumpRevision } = useTrainingDataContext();
 
-  const persistShot = useCallback(async (clubId: string, shot: ShotData) => {
+  const persistShot = useCallback(async (clubId: string, shot: ShotData, sessionId: string) => {
     const club = await db.getFirstAsync<DbClub>('SELECT * FROM clubs WHERE id = ?', clubId);
     if (club == null) {
       throw new Error(`Club ${clubId} nicht gefunden.`);
@@ -641,8 +641,6 @@ export function useShotCapture() {
 
     const shotId = createId('shot');
     const classified = classifyShot(shot);
-    const sessionKey = new Date().toISOString().slice(0, 10);
-    const sessionId = `session-${sessionKey}-${clubId}`;
     const sessionDate = formatSessionDate(new Date());
 
     await db.withTransactionAsync(async () => {

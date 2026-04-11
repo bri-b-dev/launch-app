@@ -96,15 +96,12 @@ function evaluateMargin(target: DbMargin): {
 export default function SessionScreen() {
   const [selectedMode] = useState('Full Swing');
   const [statsScope, setStatsScope] = useState<StatsScope>('heute');
-  const { activeClubId, setActiveClubId } = useTrainingState();
+  const { activeClubId, setActiveClubId, activeSessionId } = useTrainingState();
   const { rows: clubs, loading: clubsLoading, error: clubsError } = useClubs();
   const club = clubs.find((item) => item.id === activeClubId) ?? clubs[0];
   const { rows: targets, loading: marginsLoading } = useMargins(club?.id ?? null);
   const { rows: shots, loading: shotsLoading } = useClubShots(club?.id ?? null);
-  const todaySessionId = club != null
-    ? `session-${new Date().toISOString().slice(0, 10)}-${club.id}`
-    : null;
-  const { rows: sessionShots } = useSessionShots(todaySessionId);
+  const { rows: sessionShots } = useSessionShots(activeSessionId);
   const clubStats = useMemo(() => computeStats(shots), [shots]);
   const todayStats = useMemo(() => computeStats(sessionShots), [sessionShots]);
   const activeStats = statsScope === 'heute' ? todayStats : clubStats;
