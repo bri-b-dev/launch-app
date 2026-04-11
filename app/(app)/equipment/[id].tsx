@@ -9,6 +9,7 @@ import {
   useClubs,
   type DbClubSessionStat,
 } from '../../../lib/hooks/use-sqlite-training';
+import { TrendChart } from '../../../components/charts/TrendChart';
 
 const FONT = {
   mono: Platform.OS === 'ios' ? 'Menlo-Regular' : 'monospace',
@@ -127,6 +128,10 @@ export default function ClubVerlaufScreen() {
         </View>
 
         <Text style={s.sectionHeading}>Verlauf pro Session ({sessionStats.length})</Text>
+
+        {!loading && sessionStats.length >= 2 && (
+          <TrendChart sessions={sessionStats} />
+        )}
 
         {loading ? (
           <Text style={s.fallback}>Wird geladen…</Text>
