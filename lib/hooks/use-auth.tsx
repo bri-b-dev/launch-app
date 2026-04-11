@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../supabase/client';
 
@@ -16,6 +16,9 @@ const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  // Track explicit sign-out so we don't clear the session due to network failures
+  // (e.g. when WiFi switches to Mevo+ and Supabase can't reach the internet)
+  const signingOut = useRef(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -23,8 +26,16 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
       setLoading(false);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
+    const { data: listener } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (event === 'SIGNED_OUT') {
+        // Only clear session when the user explicitly signed out, not on network failures
+        if (signingOut.current) {
+          setSession(null);
+          signingOut.current = false;
+        }
+      } else if (newSession != null) {
+        setSession(newSession);
+      }
     });
 
     return () => listener.subscription.unsubscribe();
@@ -45,6 +56,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   }
 
   async function signOut(): Promise<void> {
+    signingOut.current = true;
     await supabase.auth.signOut({ scope: 'local' });
   }
 
