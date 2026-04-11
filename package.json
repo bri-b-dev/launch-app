@@ -5,8 +5,11 @@
   "private": true,
   "scripts": {
     "start": "expo start",
+    "start:mock": "EXPO_PUBLIC_MOCK_MEVO=true expo start",
     "ios": "expo run:ios",
+    "ios:mock": "EXPO_PUBLIC_MOCK_MEVO=true expo run:ios",
     "android": "expo run:android",
+    "android:mock": "EXPO_PUBLIC_MOCK_MEVO=true expo run:android",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

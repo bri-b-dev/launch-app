@@ -108,6 +108,7 @@ export default function DashboardScreen() {
     connect,
     arm,
     disconnect,
+    isMock,
   } = useMevoSession();
   const { activeClubId } = useTrainingState();
   const { rows: clubs } = useClubs();
@@ -149,7 +150,7 @@ export default function DashboardScreen() {
       await arm();
       console.log('[Mevo] arm() erfolgreich');
     } catch (err) {
-      handleActionError('Armen', err);
+      handleActionError('Messung starten', err);
     }
   }, [arm, handleActionError]);
 
@@ -250,7 +251,10 @@ export default function DashboardScreen() {
 
         {/* ── Error banner ──────────────────────────────────────────── */}
         {bannerMessage != null && <ErrorBanner message={bannerMessage} />}
-        {!CONNECTOR_SUPPORTED && (
+        {isMock && (
+          <InfoBanner message="Mock-Mevo aktiv. Verbindungsstatus und Schlagdaten werden lokal simuliert und wie echte Schläge in SQLite gespeichert." />
+        )}
+        {!CONNECTOR_SUPPORTED && !isMock && (
           <InfoBanner message="Web-Build erkannt. TCP zum Mevo+ funktioniert nur in einer nativen Android- oder iOS-Development-Build, nicht im Browser." />
         )}
 
@@ -421,7 +425,7 @@ function ConnectButton({ state, onConnect, onArm, onDisconnect }: Readonly<Conne
   if (state === 'connected') {
     return (
       <Pressable style={s.headerBtn} onPress={onArm}>
-        <Text style={[s.headerBtnText, { color: C.warning }]}>Armen</Text>
+        <Text style={[s.headerBtnText, { color: C.warning }]}>Messung starten</Text>
       </Pressable>
     );
   }
@@ -536,7 +540,7 @@ interface EmptyStateProps {
 function EmptyState({ state, onConnect }: Readonly<EmptyStateProps>) {
   let title: string;
   if (state === 'connecting') title = 'Verbinde…';
-  else if (state === 'connected') title = 'Bereit zum Armen';
+  else if (state === 'connected') title = 'Bereit zum Starten';
   else title = 'Wartet auf Schlag';
 
   const body = state === 'armed'

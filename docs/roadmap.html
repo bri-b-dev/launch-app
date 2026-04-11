@@ -249,6 +249,40 @@
     color: var(--v2);
     letter-spacing: 0.05em;
   }
+  .feature.partial {
+    border-color: #1e3a5f;
+    position: relative;
+  }
+  .feature.partial::after {
+    content: '◐ partial';
+    position: absolute;
+    top: 0.55rem;
+    right: 0.7rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    color: #60a5fa;
+    letter-spacing: 0.05em;
+  }
+
+  .checklist {
+    margin-top: 0.6rem;
+    padding-left: 1.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .cl {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+    line-height: 1.5;
+  }
+  .cl::before { content: '✗'; flex-shrink: 0; opacity: 0.4; }
+  .cl.ok { color: var(--mvp); }
+  .cl.ok::before { content: '✓'; opacity: 1; }
 
   .dep-note {
     margin-top: 1.2rem;
@@ -412,6 +446,11 @@
           </div>
           <div class="feature-desc">Club face as graphic, impact point as dot. Heatmap across multiple shots. Requires FIL add-on.</div>
           <div class="feature-tags"><span class="tag">FIL add-on</span><span class="tag">SVG</span></div>
+          <div class="checklist">
+            <div class="cl">faceImpactX/Y in ShotData definiert, aber Protokoll-Offsets noch unverifiziert</div>
+            <div class="cl">Keine DB-Felder für FIL-Koordinaten angelegt</div>
+            <div class="cl">Keine Visualisierungs-Komponente</div>
+          </div>
         </div>
 
         <div class="feature done">
@@ -441,13 +480,20 @@
           <div class="feature-tags"><span class="tag">history</span></div>
         </div>
 
-        <div class="feature">
+        <div class="feature partial">
           <div class="feature-top">
             <div class="feature-icon">📉</div>
             <div class="feature-name">Trend Charts</div>
           </div>
           <div class="feature-desc">Metric development over time (e.g. AoA across last 10 sessions). Shows whether swing work is paying off.</div>
           <div class="feature-tags"><span class="tag">victory-native</span><span class="tag">already installed</span></div>
+          <div class="checklist">
+            <div class="cl ok">victory-native v41.20.0 installiert</div>
+            <div class="cl ok">useClubSessionStats() liefert Session-Zeitreihe (Carry, Speed, Hit Rate)</div>
+            <div class="cl ok">Club Verlauf Screen zeigt Stats textbasiert pro Session</div>
+            <div class="cl">Linien-/Balkendiagramm-Komponente noch nicht erstellt</div>
+            <div class="cl">Trend-Screen übergreifend (mehrere Metriken wählbar) fehlt</div>
+          </div>
         </div>
 
       </div>
@@ -472,13 +518,20 @@
       </div>
       <div class="features">
 
-        <div class="feature">
+        <div class="feature partial">
           <div class="feature-top">
             <div class="feature-icon">📷</div>
             <div class="feature-name">Video Recording + Sync</div>
           </div>
           <div class="feature-desc">Continuous recording, shot event as trigger, clip cut from buffer (2s pre / 3s post impact). Post-trigger first.</div>
           <div class="feature-tags"><span class="tag">vision-camera</span><span class="tag">circular buffer</span></div>
+          <div class="checklist">
+            <div class="cl ok">expo-video v3.0.16 installiert</div>
+            <div class="cl">vision-camera nicht installiert</div>
+            <div class="cl">Keine Aufnahme-Komponenten / kein Recording-Hook</div>
+            <div class="cl">Kein Circular Buffer (Pre-Impact)</div>
+            <div class="cl">Shot-Event-Trigger für Clip-Schnitt fehlt</div>
+          </div>
         </div>
 
         <div class="feature">
@@ -488,6 +541,11 @@
           </div>
           <div class="feature-desc">Play clip alongside shot metrics. Slow motion. Frame-accurate scrubbing.</div>
           <div class="feature-tags"><span class="tag">expo-video</span><span class="tag">already installed</span></div>
+          <div class="checklist">
+            <div class="cl ok">expo-video v3.0.16 installiert</div>
+            <div class="cl">Keine Player-Komponente im Shot-Detail Screen</div>
+            <div class="cl">Kein Slow-Motion / Frame-Scrubbing</div>
+          </div>
         </div>
 
         <div class="feature">
@@ -497,15 +555,26 @@
           </div>
           <div class="feature-desc">Draw lines and points: swing path, head position, hip line. Freeze a frame, then annotate.</div>
           <div class="feature-tags"><span class="tag">Skia / SVG overlay</span><span class="tag">react-native-skia</span></div>
+          <div class="checklist">
+            <div class="cl ok">react-native-skia installiert &amp; aktiv genutzt (Dispersion Chart)</div>
+            <div class="cl">Keine Annotations-Komponente</div>
+            <div class="cl">Kein Freeze-Frame-Mechanismus</div>
+          </div>
         </div>
 
-        <div class="feature">
+        <div class="feature partial">
           <div class="feature-top">
             <div class="feature-icon">📁</div>
             <div class="feature-name">Video Storage</div>
           </div>
           <div class="feature-desc">Save clips locally (expo-file-system), optionally upload to Supabase Storage. DB link to shot.</div>
           <div class="feature-tags"><span class="tag">expo-file-system</span><span class="tag">Supabase Storage</span></div>
+          <div class="checklist">
+            <div class="cl ok">DB-Felder video_path + video_url in shots-Tabelle angelegt</div>
+            <div class="cl ok">Migration für Felder existiert (init.ts ensureColumn)</div>
+            <div class="cl">Keine Speicherlogik / kein File-System-Handling</div>
+            <div class="cl">Kein Upload zu Supabase Storage</div>
+          </div>
         </div>
 
         <div class="feature">
@@ -539,13 +608,20 @@
       </div>
       <div class="features">
 
-        <div class="feature">
+        <div class="feature done">
           <div class="feature-top">
             <div class="feature-icon">☁️</div>
             <div class="feature-name">Supabase Sync</div>
           </div>
           <div class="feature-desc">Upload shot data from SQLite → Supabase when online. Offline-first remains intact.</div>
           <div class="feature-tags"><span class="tag">Supabase</span><span class="tag">already installed</span></div>
+          <div class="checklist">
+            <div class="cl ok">syncToSupabase() upserted clubs, sessions, session_clubs, margins, shots</div>
+            <div class="cl ok">Manual Sync Button in Settings mit Status-Feedback (idle/syncing/success/error)</div>
+            <div class="cl ok">Letzter Sync-Zeitstempel wird angezeigt</div>
+            <div class="cl ok">Offline-first intakt — autoRefreshToken deaktiviert</div>
+            <div class="cl ok">SecureStore-Adapter für Auth-Token</div>
+          </div>
         </div>
 
         <div class="feature">
@@ -557,13 +633,19 @@
           <div class="feature-tags"><span class="tag">expo-sharing</span></div>
         </div>
 
-        <div class="feature">
+        <div class="feature partial">
           <div class="feature-top">
             <div class="feature-icon">📱</div>
             <div class="feature-name">Multi-Device</div>
           </div>
           <div class="feature-desc">Data in sync across iPad and iPhone. Important when camera is on one device, app on another.</div>
           <div class="feature-tags"><span class="tag">Supabase Realtime</span></div>
+          <div class="checklist">
+            <div class="cl ok">Upload (SQLite → Supabase) funktioniert</div>
+            <div class="cl">Kein Download / Sync from Cloud</div>
+            <div class="cl">Keine Konflikt-Auflösung bei gleichzeitigen Writes</div>
+            <div class="cl">Kein Supabase Realtime Listener</div>
+          </div>
         </div>
 
       </div>

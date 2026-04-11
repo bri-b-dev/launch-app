@@ -151,7 +151,7 @@ export default function SessionScreen() {
             </View>
             <View style={s.statePill}>
               <View style={s.stateDot} />
-              <Text style={s.statePillText}>Armed</Text>
+              <Text style={s.statePillText}>Bereit</Text>
             </View>
           </View>
 
