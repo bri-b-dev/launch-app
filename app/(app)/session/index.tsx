@@ -268,26 +268,53 @@ export default function SessionScreen() {
             </Text>
           ) : (
             <>
-              <StatRow
-                label="Schläge"
-                value={String(activeStats.shotCount)}
+              <View style={s.analysisGrid}>
+                <AnalysisTile
+                  label="Schläge"
+                  value={String(activeStats.shotCount)}
+                />
+                <AnalysisTile
+                  label="Trefferquote"
+                  value={activeStats.hitRatePct != null ? `${Math.round(activeStats.hitRatePct)} %` : '—'}
+                  accent={
+                    activeStats.hitRatePct == null ? undefined
+                    : activeStats.hitRatePct >= 70 ? C.green
+                    : activeStats.hitRatePct >= 50 ? C.gold
+                    : C.red
+                  }
+                />
+                <AnalysisTile
+                  label="Ø Carry"
+                  value={activeStats.avgCarry != null ? `${Math.round(activeStats.avgCarry)} y` : '—'}
+                  sub={activeStats.stdDevCarry != null ? `± ${Math.round(activeStats.stdDevCarry)} y` : undefined}
+                  accent={C.gold}
+                />
+                <AnalysisTile
+                  label="Smash Factor"
+                  value={activeStats.smashFactor != null ? activeStats.smashFactor.toFixed(2) : '—'}
+                  accent={
+                    activeStats.smashFactor == null ? undefined
+                    : activeStats.smashFactor >= 1.48 ? C.green
+                    : activeStats.smashFactor >= 1.42 ? C.gold
+                    : C.textSecondary
+                  }
+                />
+              </View>
+
+              <CarryRange
+                min={activeStats.minCarry}
+                avg={activeStats.avgCarry}
+                max={activeStats.maxCarry}
+                stdDev={activeStats.stdDevCarry}
               />
-              <StatRow
-                label="Ø Carry"
-                value={
-                  activeStats.avgCarry != null
-                    ? `${Math.round(activeStats.avgCarry)} y${activeStats.stdDevCarry != null ? ` ± ${Math.round(activeStats.stdDevCarry)} y` : ''}`
-                    : '—'
-                }
-                accent={C.gold}
-              />
-              <StatRow
-                label="Trefferquote"
-                value={activeStats.hitRatePct != null ? `${Math.round(activeStats.hitRatePct)} %` : '—'}
-                accent={activeStats.hitRatePct != null && activeStats.hitRatePct >= 70 ? C.green : activeStats.hitRatePct != null && activeStats.hitRatePct >= 50 ? C.gold : C.red}
-              />
+
+              <ShapeBar dist={activeStats.shapeDist} total={activeStats.shotCount} />
+
               {activeStats.avgBallSpeed != null && (
-                <StatRow label="Ø Ball Speed" value={`${activeStats.avgBallSpeed.toFixed(1)} mph`} />
+                <StatRow
+                  label="Ø Ball Speed"
+                  value={`${activeStats.avgBallSpeed.toFixed(1)} mph${activeStats.stdDevBallSpeed != null ? ` ± ${activeStats.stdDevBallSpeed.toFixed(1)}` : ''}`}
+                />
               )}
               {activeStats.avgClubSpeed != null && (
                 <StatRow label="Ø Club Speed" value={`${activeStats.avgClubSpeed.toFixed(1)} mph`} />
@@ -296,7 +323,10 @@ export default function SessionScreen() {
                 <StatRow label="Ø VLA" value={`${activeStats.avgVla.toFixed(1)} °`} />
               )}
               {activeStats.avgSpin != null && (
-                <StatRow label="Ø Spin" value={`${Math.round(activeStats.avgSpin)} rpm`} />
+                <StatRow
+                  label="Ø Spin"
+                  value={`${Math.round(activeStats.avgSpin)} rpm${activeStats.stdDevSpin != null ? ` ± ${Math.round(activeStats.stdDevSpin)}` : ''}`}
+                />
               )}
             </>
           )}
@@ -367,6 +397,97 @@ function StatRow({
     <View style={s.statRow}>
       <Text style={s.statLabel}>{label}</Text>
       <Text style={[s.statValue, accent != null && { color: accent }]}>{value}</Text>
+    </View>
+  );
+}
+
+const SHAPE_COLORS: Record<string, string> = {
+  Draw: C.blue,
+  Straight: C.green,
+  Fade: C.orange,
+};
+
+function AnalysisTile({
+  label,
+  value,
+  sub,
+  accent,
+}: Readonly<{ label: string; value: string; sub?: string; accent?: string }>) {
+  return (
+    <View style={s.analysisTile}>
+      <Text style={s.analysisTileLabel}>{label}</Text>
+      <Text style={[s.analysisTileValue, accent != null && { color: accent }]}>{value}</Text>
+      {sub != null && <Text style={s.analysisTileSub}>{sub}</Text>}
+    </View>
+  );
+}
+
+function CarryRange({
+  min,
+  avg,
+  max,
+  stdDev,
+}: Readonly<{ min: number | null; avg: number | null; max: number | null; stdDev: number | null }>) {
+  if (min == null || avg == null || max == null) return null;
+  const range = max - min;
+  const avgPct = range > 0 ? ((avg - min) / range) * 100 : 50;
+  const stdPct = stdDev != null && range > 0 ? (stdDev / range) * 100 : 0;
+  const bandLeft = Math.max(0, avgPct - stdPct);
+  const bandWidth = Math.min(100, avgPct + stdPct) - bandLeft;
+
+  return (
+    <View style={s.carryRange}>
+      <View style={s.carryRangeHeader}>
+        <Text style={s.carryRangeLabel}>Carry Bandbreite</Text>
+        <Text style={s.carryRangeValues}>{Math.round(min)} – {Math.round(max)} y</Text>
+      </View>
+      <View style={s.carryRangeTrack}>
+        <View style={[s.carryRangeBand, { left: `${bandLeft}%`, width: `${bandWidth}%` }]} />
+        <View style={[s.carryRangeAvgLine, { left: `${avgPct}%` }]} />
+      </View>
+      <View style={s.carryRangeFooter}>
+        <Text style={s.carryRangeMuted}>{Math.round(min)} y</Text>
+        <Text style={s.carryRangeAvgLabel}>Ø {Math.round(avg)} y</Text>
+        <Text style={s.carryRangeMuted}>{Math.round(max)} y</Text>
+      </View>
+    </View>
+  );
+}
+
+function ShapeBar({
+  dist,
+  total,
+}: Readonly<{ dist: Record<string, number>; total: number }>) {
+  if (total === 0) return null;
+  const entries = Object.entries(dist).sort((a, b) => b[1] - a[1]);
+
+  return (
+    <View style={s.shapeBar}>
+      <Text style={s.shapeBarLabel}>Shape-Verteilung</Text>
+      <View style={s.shapeBarTrack}>
+        {entries.map(([shape, count]) => (
+          <View
+            key={shape}
+            style={[
+              s.shapeBarSegment,
+              {
+                flex: count,
+                backgroundColor: SHAPE_COLORS[shape] ?? C.textMuted,
+              },
+            ]}
+          />
+        ))}
+      </View>
+      <View style={s.shapeBarLegend}>
+        {entries.map(([shape, count]) => (
+          <View key={shape} style={s.shapeBarLegendItem}>
+            <View style={[s.shapeBarDot, { backgroundColor: SHAPE_COLORS[shape] ?? C.textMuted }]} />
+            <Text style={s.shapeBarLegendText}>
+              {shape} {Math.round((count / total) * 100)} %
+            </Text>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
@@ -758,5 +879,146 @@ const s = StyleSheet.create({
     fontFamily: FONT.demi,
     color: C.text,
     fontSize: 14,
+  },
+  analysisGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 12,
+  },
+  analysisTile: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: C.panel,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: C.border,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  analysisTileLabel: {
+    fontFamily: FONT.body,
+    color: C.textSecondary,
+    fontSize: 11,
+    marginBottom: 4,
+  },
+  analysisTileValue: {
+    fontFamily: FONT.heavy,
+    color: C.text,
+    fontSize: 22,
+    lineHeight: 26,
+  },
+  analysisTileSub: {
+    fontFamily: FONT.mono,
+    color: C.textMuted,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  carryRange: {
+    backgroundColor: C.panel,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: C.border,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 12,
+  },
+  carryRangeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  carryRangeLabel: {
+    fontFamily: FONT.body,
+    color: C.textSecondary,
+    fontSize: 11,
+  },
+  carryRangeValues: {
+    fontFamily: FONT.mono,
+    color: C.textMuted,
+    fontSize: 11,
+  },
+  carryRangeTrack: {
+    height: 8,
+    backgroundColor: C.panelAlt,
+    borderRadius: 4,
+    marginBottom: 6,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  carryRangeBand: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    backgroundColor: `${C.gold}40`,
+    borderRadius: 4,
+  },
+  carryRangeAvgLine: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 2,
+    backgroundColor: C.gold,
+    marginLeft: -1,
+  },
+  carryRangeFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  carryRangeMuted: {
+    fontFamily: FONT.mono,
+    color: C.textMuted,
+    fontSize: 10,
+  },
+  carryRangeAvgLabel: {
+    fontFamily: FONT.mono,
+    color: C.gold,
+    fontSize: 10,
+  },
+  shapeBar: {
+    backgroundColor: C.panel,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: C.border,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 12,
+  },
+  shapeBarLabel: {
+    fontFamily: FONT.body,
+    color: C.textSecondary,
+    fontSize: 11,
+    marginBottom: 10,
+  },
+  shapeBarTrack: {
+    flexDirection: 'row',
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+    gap: 2,
+    marginBottom: 10,
+  },
+  shapeBarSegment: {
+    borderRadius: 4,
+  },
+  shapeBarLegend: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  shapeBarLegendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  shapeBarDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  shapeBarLegendText: {
+    fontFamily: FONT.demi,
+    color: C.textSecondary,
+    fontSize: 12,
   },
 });
