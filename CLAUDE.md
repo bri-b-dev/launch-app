@@ -68,9 +68,7 @@ FIL (`hasFaceImpact`): `faceImpactX`, `faceImpactY`
 Phase 1 vollständig abgeschlossen. Phase 2 weitgehend done.
 
 **Phase 2 — Offene Punkte:**
-- [ ] Trend Charts: Linien-/Balkendiagramm-Komponente fehlt noch (victory-native installiert, Hook `useClubSessionStats()` fertig)
-- [ ] Trend-Screen übergreifend (mehrere Metriken wählbar) fehlt
-- [ ] Face Impact View: Protokoll-Byte-Offsets unverifiziert, keine DB-Felder, keine Visualisierung (FIL add-on abhängig)
+- [ ] Trend-Übersicht: dedizierter Screen mit Schläger-Selektor + Metrik-Mehrfachauswahl fehlt (TrendChart-Komponente und Hook sind fertig)
 
 **Offene Hardware-TODOs (Phase 1 carry-over):**
 - [ ] Protokoll-Byte-Offsets mit echtem Gerät verifizieren (besonders FIL-Felder)

@@ -439,20 +439,6 @@
           <div class="feature-tags"><span class="tag">per club</span><span class="tag">draw-bias</span></div>
         </div>
 
-        <div class="feature">
-          <div class="feature-top">
-            <div class="feature-icon">💥</div>
-            <div class="feature-name">Face Impact View</div>
-          </div>
-          <div class="feature-desc">Club face as graphic, impact point as dot. Heatmap across multiple shots. Requires FIL add-on.</div>
-          <div class="feature-tags"><span class="tag">FIL add-on</span><span class="tag">SVG</span></div>
-          <div class="checklist">
-            <div class="cl">faceImpactX/Y in ShotData definiert, aber Protokoll-Offsets noch unverifiziert</div>
-            <div class="cl">Keine DB-Felder für FIL-Koordinaten angelegt</div>
-            <div class="cl">Keine Visualisierungs-Komponente</div>
-          </div>
-        </div>
-
         <div class="feature done">
           <div class="feature-top">
             <div class="feature-icon">📈</div>
@@ -480,19 +466,35 @@
           <div class="feature-tags"><span class="tag">history</span></div>
         </div>
 
-        <div class="feature partial">
+        <div class="feature done">
           <div class="feature-top">
             <div class="feature-icon">📉</div>
             <div class="feature-name">Trend Charts</div>
           </div>
-          <div class="feature-desc">Metric development over time (e.g. AoA across last 10 sessions). Shows whether swing work is paying off.</div>
-          <div class="feature-tags"><span class="tag">victory-native</span><span class="tag">already installed</span></div>
+          <div class="feature-desc">Metric development over time per club. Sparkline with metric selector (Carry / Ball Speed / Hit Rate) integrated in club history screen.</div>
+          <div class="feature-tags"><span class="tag">victory-native</span><span class="tag">TrendChart.tsx</span></div>
           <div class="checklist">
             <div class="cl ok">victory-native v41.20.0 installiert</div>
             <div class="cl ok">useClubSessionStats() liefert Session-Zeitreihe (Carry, Speed, Hit Rate)</div>
             <div class="cl ok">Club Verlauf Screen zeigt Stats textbasiert pro Session</div>
             <div class="cl ok">TrendChart-Komponente: Sparkline mit Metrik-Selektor (Carry / Ball Speed / Trefferquote) pro Schläger</div>
-            <div class="cl">Trend-Screen übergreifend (mehrere Metriken wählbar, schlägerübergreifend) fehlt</div>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">📊</div>
+            <div class="feature-name">Trend-Übersicht</div>
+          </div>
+          <div class="feature-desc">Dedicated screen for cross-metric trend analysis. Select club + any combination of metrics. Multi-line chart or stacked panels. Entry point via History or Equipment tab.</div>
+          <div class="feature-tags"><span class="tag">victory-native</span><span class="tag">TrendChart</span><span class="tag">multi-metric</span></div>
+          <div class="checklist">
+            <div class="cl ok">TrendChart-Komponente wiederverwendbar</div>
+            <div class="cl ok">useClubSessionStats() Hook verfügbar</div>
+            <div class="cl">Dedizierter Trend-Screen (app/(app)/trends/index.tsx) fehlt</div>
+            <div class="cl">Schläger-Selektor (Dropdown oder Segment) im Screen fehlt</div>
+            <div class="cl">Metrik-Mehrfachauswahl (Checkboxes / Toggle-Chips) fehlt</div>
+            <div class="cl">Tab-Einstieg in Trend-Screen nicht verlinkt</div>
           </div>
         </div>
 
@@ -574,6 +576,20 @@
             <div class="cl ok">Migration für Felder existiert (init.ts ensureColumn)</div>
             <div class="cl">Keine Speicherlogik / kein File-System-Handling</div>
             <div class="cl">Kein Upload zu Supabase Storage</div>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-top">
+            <div class="feature-icon">💥</div>
+            <div class="feature-name">Face Impact View</div>
+          </div>
+          <div class="feature-desc">Club face as graphic, impact point as dot. Heatmap across multiple shots. Natural fit here: FIL data pairs well with video to correlate impact location with swing.</div>
+          <div class="feature-tags"><span class="tag">FIL add-on</span><span class="tag">Skia</span></div>
+          <div class="checklist">
+            <div class="cl">faceImpactX/Y in ShotData definiert, aber Protokoll-Offsets noch unverifiziert</div>
+            <div class="cl">Keine DB-Felder für FIL-Koordinaten angelegt</div>
+            <div class="cl">Keine Visualisierungs-Komponente</div>
           </div>
         </div>
 
