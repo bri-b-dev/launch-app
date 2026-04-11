@@ -1,0 +1,124 @@
+name: android-release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "20"
+  JAVA_VERSION: "17"
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare release metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_VERSION="$(node -p "require('./app.json').expo.version")"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          VERSION_NAME="${GITHUB_REF_NAME#v}"
+          if [[ "${GITHUB_REF_TYPE}" != "tag" ]]; then
+            VERSION_NAME="$APP_VERSION"
+          fi
+          if [[ -z "$VERSION_NAME" ]]; then
+            VERSION_NAME="$APP_VERSION"
+          fi
+          echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
+
+      - name: Decode Android keystore
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > "$RUNNER_TEMP/upload-keystore.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/upload-keystore.jks" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> "$GITHUB_ENV"
+
+      - name: Build signed Android release
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew \
+            clean \
+            :app:bundleRelease \
+            :app:assembleRelease \
+            -PversionName="${VERSION_NAME}" \
+            -PversionCode="${GITHUB_RUN_NUMBER}"
+
+      - name: Collect build artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp android/app/build/outputs/bundle/release/app-release.aab "dist/launch-monitor-${VERSION_NAME}.aab"
+          cp android/app/build/outputs/apk/release/app-release.apk "dist/launch-monitor-${VERSION_NAME}.apk"
+          ls -lh dist
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-${{ env.VERSION_NAME }}
+          path: dist/*
+          if-no-files-found: error
+
+      - name: Create release notes
+        if: github.ref_type == 'tag'
+        shell: bash
+        run: |
+          {
+            echo "## Android Release"
+            echo
+            echo "- Tag: \`${GITHUB_REF_NAME}\`"
+            echo "- Expo-Version: \`${APP_VERSION}\`"
+            echo "- Package-Version: \`${PACKAGE_VERSION}\`"
+            echo "- Android versionCode: \`${GITHUB_RUN_NUMBER}\`"
+          } > RELEASE_NOTES.md
+
+      - name: Create GitHub Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body_path: RELEASE_NOTES.md
+          files: dist/*
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
