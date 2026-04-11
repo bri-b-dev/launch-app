@@ -16,6 +16,8 @@ concurrency:
 env:
   NODE_VERSION: "20"
   JAVA_VERSION: "17"
+  EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+  EXPO_PUBLIC_SUPABASE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_KEY }}
 
 jobs:
   build-release:
