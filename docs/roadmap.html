@@ -474,27 +474,27 @@
           <div class="feature-desc">Metric development over time per club. Sparkline with metric selector (Carry / Ball Speed / Hit Rate) integrated in club history screen.</div>
           <div class="feature-tags"><span class="tag">victory-native</span><span class="tag">TrendChart.tsx</span></div>
           <div class="checklist">
-            <div class="cl ok">victory-native v41.20.0 installiert</div>
-            <div class="cl ok">useClubSessionStats() liefert Session-Zeitreihe (Carry, Speed, Hit Rate)</div>
-            <div class="cl ok">Club Verlauf Screen zeigt Stats textbasiert pro Session</div>
-            <div class="cl ok">TrendChart-Komponente: Sparkline mit Metrik-Selektor (Carry / Ball Speed / Trefferquote) pro Schläger</div>
+            <div class="cl ok">victory-native v41.20.0 installed</div>
+            <div class="cl ok">useClubSessionStats() provides a session time series (Carry, Speed, Hit Rate)</div>
+            <div class="cl ok">Club history screen shows text-based stats per session</div>
+            <div class="cl ok">TrendChart component: sparkline with metric selector (Carry / Ball Speed / Hit Rate) per club</div>
           </div>
         </div>
 
         <div class="feature">
           <div class="feature-top">
             <div class="feature-icon">📊</div>
-            <div class="feature-name">Trend-Übersicht</div>
+            <div class="feature-name">Trend Overview</div>
           </div>
           <div class="feature-desc">Dedicated screen for cross-metric trend analysis. Select club + any combination of metrics. Multi-line chart or stacked panels. Entry point via History or Equipment tab.</div>
           <div class="feature-tags"><span class="tag">victory-native</span><span class="tag">TrendChart</span><span class="tag">multi-metric</span></div>
           <div class="checklist">
-            <div class="cl ok">TrendChart-Komponente wiederverwendbar</div>
-            <div class="cl ok">useClubSessionStats() Hook verfügbar</div>
-            <div class="cl ok">Dedizierter Trend-Screen (app/(app)/history/trends.tsx)</div>
-            <div class="cl ok">Schläger-Selektor (horizontale Chips) im Screen</div>
-            <div class="cl ok">Metrik-Mehrfachauswahl (Toggle-Chips, min. 1 Metrik)</div>
-            <div class="cl ok">Einstieg via History-Tab → Trend-Übersicht-Button</div>
+            <div class="cl ok">TrendChart component is reusable</div>
+            <div class="cl ok">useClubSessionStats() hook available</div>
+            <div class="cl ok">Dedicated trend screen (app/(app)/history/trends.tsx)</div>
+            <div class="cl ok">Club selector (horizontal chips) on the screen</div>
+            <div class="cl ok">Multi-metric selection (toggle chips, min. 1 metric)</div>
+            <div class="cl ok">Entry via History tab → Trend Overview button</div>
           </div>
         </div>
 
@@ -528,11 +528,11 @@
           <div class="feature-desc">Continuous recording, shot event as trigger, clip cut from buffer (2s pre / 3s post impact). Post-trigger first.</div>
           <div class="feature-tags"><span class="tag">vision-camera</span><span class="tag">circular buffer</span></div>
           <div class="checklist">
-            <div class="cl ok">expo-video v3.0.16 installiert</div>
-            <div class="cl">vision-camera nicht installiert</div>
-            <div class="cl">Keine Aufnahme-Komponenten / kein Recording-Hook</div>
-            <div class="cl">Kein Circular Buffer (Pre-Impact)</div>
-            <div class="cl">Shot-Event-Trigger für Clip-Schnitt fehlt</div>
+            <div class="cl ok">expo-video v3.0.16 installed</div>
+            <div class="cl">vision-camera not installed</div>
+            <div class="cl">No recording components / no recording hook</div>
+            <div class="cl">No circular buffer (pre-impact)</div>
+            <div class="cl">Missing shot-event trigger for clip cutting</div>
           </div>
         </div>
 
@@ -544,9 +544,9 @@
           <div class="feature-desc">Play clip alongside shot metrics. Slow motion. Frame-accurate scrubbing.</div>
           <div class="feature-tags"><span class="tag">expo-video</span><span class="tag">already installed</span></div>
           <div class="checklist">
-            <div class="cl ok">expo-video v3.0.16 installiert</div>
-            <div class="cl">Keine Player-Komponente im Shot-Detail Screen</div>
-            <div class="cl">Kein Slow-Motion / Frame-Scrubbing</div>
+            <div class="cl ok">expo-video v3.0.16 installed</div>
+            <div class="cl">No player component in the shot detail screen</div>
+            <div class="cl">No slow motion / frame scrubbing</div>
           </div>
         </div>
 
@@ -558,9 +558,9 @@
           <div class="feature-desc">Draw lines and points: swing path, head position, hip line. Freeze a frame, then annotate.</div>
           <div class="feature-tags"><span class="tag">Skia / SVG overlay</span><span class="tag">react-native-skia</span></div>
           <div class="checklist">
-            <div class="cl ok">react-native-skia installiert &amp; aktiv genutzt (Dispersion Chart)</div>
-            <div class="cl">Keine Annotations-Komponente</div>
-            <div class="cl">Kein Freeze-Frame-Mechanismus</div>
+            <div class="cl ok">react-native-skia installed &amp; already in active use (dispersion chart)</div>
+            <div class="cl">No annotation component</div>
+            <div class="cl">No freeze-frame mechanism</div>
           </div>
         </div>
 
@@ -572,10 +572,10 @@
           <div class="feature-desc">Save clips locally (expo-file-system), optionally upload to Supabase Storage. DB link to shot.</div>
           <div class="feature-tags"><span class="tag">expo-file-system</span><span class="tag">Supabase Storage</span></div>
           <div class="checklist">
-            <div class="cl ok">DB-Felder video_path + video_url in shots-Tabelle angelegt</div>
-            <div class="cl ok">Migration für Felder existiert (init.ts ensureColumn)</div>
-            <div class="cl">Keine Speicherlogik / kein File-System-Handling</div>
-            <div class="cl">Kein Upload zu Supabase Storage</div>
+            <div class="cl ok">DB fields video_path + video_url added to the shots table</div>
+            <div class="cl ok">Migration for these fields exists (init.ts ensureColumn)</div>
+            <div class="cl">No storage logic / no file system handling</div>
+            <div class="cl">No upload to Supabase Storage</div>
           </div>
         </div>
 
@@ -587,9 +587,9 @@
           <div class="feature-desc">Club face as graphic, impact point as dot. Heatmap across multiple shots. Natural fit here: FIL data pairs well with video to correlate impact location with swing.</div>
           <div class="feature-tags"><span class="tag">FIL add-on</span><span class="tag">Skia</span></div>
           <div class="checklist">
-            <div class="cl">faceImpactX/Y in ShotData definiert, aber Protokoll-Offsets noch unverifiziert</div>
-            <div class="cl">Keine DB-Felder für FIL-Koordinaten angelegt</div>
-            <div class="cl">Keine Visualisierungs-Komponente</div>
+            <div class="cl">faceImpactX/Y defined in ShotData, but protocol offsets still unverified</div>
+            <div class="cl">No DB fields added for FIL coordinates</div>
+            <div class="cl">No visualization component</div>
           </div>
         </div>
 
@@ -633,10 +633,10 @@
           <div class="feature-tags"><span class="tag">Supabase</span><span class="tag">already installed</span></div>
           <div class="checklist">
             <div class="cl ok">syncToSupabase() upserted clubs, sessions, session_clubs, margins, shots</div>
-            <div class="cl ok">Manual Sync Button in Settings mit Status-Feedback (idle/syncing/success/error)</div>
-            <div class="cl ok">Letzter Sync-Zeitstempel wird angezeigt</div>
-            <div class="cl ok">Offline-first intakt — autoRefreshToken deaktiviert</div>
-            <div class="cl ok">SecureStore-Adapter für Auth-Token</div>
+            <div class="cl ok">Manual sync button in Settings with status feedback (idle/syncing/success/error)</div>
+            <div class="cl ok">Last sync timestamp is shown</div>
+            <div class="cl ok">Offline-first remains intact — autoRefreshToken disabled</div>
+            <div class="cl ok">SecureStore adapter for auth tokens</div>
           </div>
         </div>
 
@@ -657,10 +657,10 @@
           <div class="feature-desc">Data in sync across iPad and iPhone. Important when camera is on one device, app on another.</div>
           <div class="feature-tags"><span class="tag">Supabase Realtime</span></div>
           <div class="checklist">
-            <div class="cl ok">Upload (SQLite → Supabase) funktioniert</div>
-            <div class="cl">Kein Download / Sync from Cloud</div>
-            <div class="cl">Keine Konflikt-Auflösung bei gleichzeitigen Writes</div>
-            <div class="cl">Kein Supabase Realtime Listener</div>
+            <div class="cl ok">Upload (SQLite → Supabase) works</div>
+            <div class="cl">No download / sync from cloud</div>
+            <div class="cl">No conflict resolution for concurrent writes</div>
+            <div class="cl">No Supabase Realtime listener</div>
           </div>
         </div>
 

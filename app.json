@@ -5,6 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "launchapp",
+    "icon": "./assets/branding/app-icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
@@ -26,6 +27,11 @@
       "typedRoutes": true
     },
     "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/branding/app-icon-foreground.png",
+        "monochromeImage": "./assets/branding/app-icon-monochrome.png",
+        "backgroundColor": "#0D1821"
+      },
       "package": "dev.bri.launchapp"
     }
   }

@@ -1,28 +1,28 @@
 # CLAUDE.md — Launch Monitor App
 
-Android Golf-Trainings-App. Direktverbindung FlightScope Mevo+ via TCP. Schlagerfassung, Analyse, Video.
+Android golf training app. Direct FlightScope Mevo+ connection via TCP. Shot capture, analysis, video.
 
 **Stack:** Expo SDK 54 (Bare), React Native 0.84, Expo Router, TypeScript strict, expo-sqlite, Supabase, victory-native, react-native-skia, expo-video
 
 ---
 
-## Konventionen
+## Conventions
 
-- TypeScript strict, kein `any` — Interfaces für Daten, Types für Unions
-- Functional components, explizite Props-Interfaces (`interface ShotCardProps`)
-- Keine Inline-Styles in wiederverwendbaren Komponenten
-- Alle DB-Calls in `lib/db/` — nie direkt in Komponenten
-- Transaktionen für zusammengehörige Writes (Shot + Video-Pfad)
-- Einheiten intern: **mph**, **yards**, **Grad** — Konvertierung nur in `lib/utils/units.ts`
-- Felder heißen exakt wie in `ShotData` (keine Umbenennung, UI-Anzeige deutsch)
-- Bei Vorschlägen, was die nächsten Schritte angeht, orientiere dich an der aktuellen Phase in docs/roadmap.html
+- TypeScript strict, no `any` — interfaces for data, types for unions
+- Functional components, explicit props interfaces (`interface ShotCardProps`)
+- No inline styles in reusable components
+- All DB calls in `lib/db/` — never directly in components
+- Transactions for related writes (shot + video path)
+- Internal units: **mph**, **yards**, **degrees** — conversion only in `lib/utils/units.ts`
+- Field names must match `ShotData` exactly (no renaming, UI labels in German)
+- When suggesting next steps, align them with the current phase in `docs/roadmap.html`
 
 ---
 
-## Projektstruktur
+## Project Structure
 
-```
-app/(auth)/             # Login, Register
+```txt
+app/(auth)/             # Login, register
 app/(app)/              # Authenticated: index, session/, history/, equipment/, settings/
 components/             # shot/, charts/, session/, video/
 lib/                    # db/, supabase/, hooks/, utils/
@@ -35,55 +35,56 @@ lib/                    # db/, supabase/, hooks/, utils/
 ```ts
 import { useMevo, useShotStats, ShotMode } from '@bri-b-dev/gspro-connect-mevoplus';
 ```
-TCP Port 5100 (binär). Ablauf: `connect()` → `configure()` → `arm()` → Schläge.  
-Kamera-Stream HTTP 8080 (MJPEG, nur Preview).
 
-**ShotData-Felder:** Basis: `ballSpeedMph`, `verticalLaunchAngle`, `horizontalLaunchAngle`, `totalSpin`, `spinAxis`, `carryDistanceYards`, `isEstimatedSpin`  
+TCP port 5100 (binary). Flow: `connect()` → `configure()` → `arm()` → shots.  
+Camera stream HTTP 8080 (MJPEG, preview only).
+
+**ShotData fields:** Base: `ballSpeedMph`, `verticalLaunchAngle`, `horizontalLaunchAngle`, `totalSpin`, `spinAxis`, `carryDistanceYards`, `isEstimatedSpin`  
 Pro (`hasClubData`): `clubSpeedMph`, `angleOfAttack`, `clubPath`, `faceToTarget`, `dynamicLoft`, `spinLoft`  
 FIL (`hasFaceImpact`): `faceImpactX`, `faceImpactY`
 
-**Hinweise:** `isEstimatedSpin === true` → Spin unzuverlässig. Spinaxis negativ = Draw. AoA Irons ca. -2° bis -5°. Shot-Event kommt 0.3–0.8s nach Impact.
+**Notes:** `isEstimatedSpin === true` → spin is unreliable. Negative spin axis = draw. Iron AoA is roughly -2° to -5°. Shot event arrives 0.3–0.8s after impact.
 
 ---
 
-## DB-Schema (SQLite offline-first, Sync → Supabase)
+## DB Schema (SQLite offline-first, Sync → Supabase)
 
 `users` · `clubs` · `launch_monitors` · `sessions` · `shots` (+ videoPath/videoUrl) · `margins`
 
 ---
 
-## Wichtige Referenz-Dateien
+## Important Reference Files
 
-- **Roadmap:** `docs/roadmap.html` — Phasen, Feature-Status (done/partial/wip), nächste Schritte
+- **Roadmap:** `docs/roadmap.html` — phases, feature status (done/partial/wip), next steps
 - **User Journeys:**
-  - `docs/user-journey-v1.md` — MVP (Phase 1 + 2): Auth, Equipment, Session, Analyse
-  - `docs/user-journey-v2.md` — v1 + v2: Video, Cloud, Sync, Export
-  - `docs/user-journey-v3.md` — v1 + v2 + v3: KI-Analyse, Trainingsprogramme, Coach View
-- **Supabase-Migrationen:** `supabase/migrations/` — SQL-Schema-History, RLS-Policies
+  - `docs/user-journey-v1.md` — MVP (Phase 1 + 2): auth, equipment, session, analysis
+  - `docs/user-journey-v2.md` — v1 + v2: video, cloud, sync, export
+  - `docs/user-journey-v3.md` — v1 + v2 + v3: AI analysis, training programs, coach view
+- **Supabase migrations:** `supabase/migrations/` — SQL schema history, RLS policies
 
 ---
 
-## Aktuelle Phase: Phase 2 (Abschluss) → Phase 3 vorbereiten
+## Current Phase: Finishing Phase 2 → Preparing Phase 3
 
-Phase 1 vollständig abgeschlossen. Phase 2 weitgehend done.
+Phase 1 is fully complete. Phase 2 is largely done.
 
-**Phase 2 — Offene Punkte:**
-- [x] Trend-Übersicht: `app/(app)/history/trends.tsx` mit Schläger-Selektor (horizontale Chips) + Metrik-Mehrfachauswahl (Toggle-Chips), Einstieg via History-Tab
+**Phase 2 — Open items:**
+- [x] Trend overview: `app/(app)/history/trends.tsx` with club selector (horizontal chips) + multi-metric selection (toggle chips), entry via History tab
 
-**Offene Hardware-TODOs (Phase 1 carry-over):**
-- [ ] Protokoll-Byte-Offsets mit echtem Gerät verifizieren (besonders FIL-Felder)
-- [ ] Shot-Event-Timing-Offset als Konstante definieren
-- [ ] Port 8080 Camera Stream verifizieren
-- [ ] FlightScope Support kontaktieren: support@flightscope.com
-
----
-
-## Bewusste Entscheidungen (nicht diskutieren)
-
-Supabase, Expo Bare, kein Expo Go, Android only, offline-first, eigene Library, kein Simulator-Support, kein Platzrundenmanagement.
+**Open hardware TODOs (Phase 1 carry-over):**
+- [ ] Verify protocol byte offsets with a real device (especially FIL fields)
+- [ ] Define the shot-event timing offset as a constant
+- [ ] Verify the port 8080 camera stream
+- [ ] Contact FlightScope support: support@flightscope.com
 
 ---
 
-## Swing-Kontext (für Analyse-Features)
+## Deliberate Decisions (Do Not Discuss)
 
-Spielerin Bri, Draw-Spielerin im Hinterkopf, aber nicht ausschließlich. Problem: Early Extension + steiler AoA. Übungsgedanke: „Knie an Knie". 7-Wood bekannter Problemschläger. Zielwerte: TrackMan Tour-Durchschnitt mit Draw-Bias (negative Spinachse).
+Supabase, Expo Bare, no Expo Go, Android only, offline-first, custom library, no simulator support, no round management.
+
+---
+
+## Swing Context (for analysis features)
+
+Player Bri, with a draw player bias in mind, but not exclusively. Main issue: early extension + steep AoA. Practice cue: "knees to knees." 7-wood is a known problem club. Target values: TrackMan Tour averages with a draw bias (negative spin axis).

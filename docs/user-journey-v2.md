@@ -1,359 +1,359 @@
 # User Journey — v1 (MVP) + v2
 
-Stand: 2026-04-11
+Status: 2026-04-11
 
-## Ziel
+## Goal
 
-Diese User Journey beschreibt den kompletten Produktfluss für:
+This user journey describes the complete product flow for:
 
 - `v1 (MVP)` = Phase 1 + Phase 2
 - `v2` = Phase 3 + Phase 4
 
-Damit deckt das Dokument den Weg von der ersten Nutzung bis zu Video-Workflows und Cloud-/Sync-Funktionen ab.
+This document therefore covers the path from first use to video workflows and cloud/sync features.
 
-## Hauptperson
+## Main Persona
 
 **Bri**
 
-- ambitionierte Golferin
-- trainiert auf der Range mit klarem Technikfokus
-- spielt Draw-Bias
-- will nicht nur Launch-Monitor-Daten sehen, sondern Training steuern
-- möchte offline trainieren können und Daten später optional syncen
+- ambitious golfer
+- trains on the range with a clear technical focus
+- plays with a draw bias
+- does not just want to see launch monitor data, but steer training
+- wants to be able to train offline and optionally sync data later
 
-## Produktversprechen über v1 + v2
+## Product Promise Across v1 + v2
 
-Die App entwickelt sich für Bri in vier Stufen:
+The app evolves for Bri in four steps:
 
-1. Verbindung und Schlagerfassung funktionieren verlässlich.
-2. Die App bewertet Schläge gegen persönliche Zielbereiche.
-3. Video macht Schwungveränderungen sichtbar.
-4. Sync und Export machen die Daten langfristig und geräteübergreifend nutzbar.
+1. Connection and shot capture work reliably.
+2. The app evaluates shots against personal target ranges.
+3. Video makes swing changes visible.
+4. Sync and export make the data usable long-term and across devices.
 
 ## User Journey
 
-### 1. App installieren und anmelden
+### 1. Install the App and Sign In
 
 **Situation**
 
-Bri richtet die App auf ihrem Android-Gerät für das Training ein.
+Bri sets up the app on her Android device for training.
 
-**Ziel der Nutzerin**
+**User Goal**
 
-Schnell in die App kommen und eine persönliche Datenbasis aufbauen.
+Get into the app quickly and build a personal data foundation.
 
 **Flow**
 
-1. Bri öffnet die App.
-2. Sie registriert sich oder meldet sich mit E-Mail und Passwort an.
-3. Die App stellt bestehende Sessions wieder her und schützt den authentifizierten Bereich.
+1. Bri opens the app.
+2. She registers or logs in with email and password.
+3. The app restores existing sessions and protects the authenticated area.
 
-**Nutzererwartung**
+**User Expectation**
 
-- einfacher Einstieg
-- stabile Anmeldung
-- persönlicher Zugriff auf Equipment, Sessions und Sync
+- simple entry
+- stable login
+- personal access to equipment, sessions, and sync
 
-### 2. Equipment vorbereiten
+### 2. Prepare Equipment
 
 **Situation**
 
-Vor echtem Training muss Bri ihre Schläger in der App hinterlegen.
+Before real training starts, Bri needs to store her clubs in the app.
 
-**Ziel der Nutzerin**
+**User Goal**
 
-Alle späteren Schläge eindeutig einem Club zuordnen.
+Assign all later shots clearly to a club.
 
 **Flow**
 
-1. Bri öffnet den Equipment-Bereich.
-2. Sie legt Schläger mit Name, Typ und Loft an.
-3. Die App speichert diese Daten lokal und verknüpft sie später mit Sessions und Schlägen.
+1. Bri opens the Equipment area.
+2. She creates clubs with name, type, and loft.
+3. The app stores this data locally and later links it with sessions and shots.
 
-**Nutzererwartung**
+**User Expectation**
 
-- schneller Setup-Flow
-- keine doppelte Pflege
-- klare Club-Auswahl im Training
+- quick setup flow
+- no duplicate maintenance
+- clear club selection during training
 
-### 3. Mevo+ verbinden und Session starten
+### 3. Connect the Mevo+ and Start a Session
 
 **Situation**
 
-Auf der Range will Bri ohne Umwege trainieren.
+On the range, Bri wants to train without detours.
 
-**Ziel der Nutzerin**
+**User Goal**
 
-Das Gerät verbinden und direkt in eine Session wechseln.
+Connect the device and move directly into a session.
 
 **Flow**
 
-1. Bri öffnet den Trainingsbereich.
-2. Die App verbindet sich mit dem Mevo+ über TCP.
-3. Das Gerät wird konfiguriert und armed.
-4. Bri startet eine neue Session.
-5. Sie wählt den aktiven Schläger.
-6. Das Live-Dashboard wird zur Hauptansicht.
+1. Bri opens the training area.
+2. The app connects to the Mevo+ via TCP.
+3. The device is configured and armed.
+4. Bri starts a new session.
+5. She selects the active club.
+6. The live dashboard becomes the main view.
 
-**Nutzererwartung**
+**User Expectation**
 
-- klarer Verbindungsstatus
-- schneller Weg vom App-Start zum ersten Schlag
-- kein Zweifel, ob das Gerät bereit ist
+- clear connection status
+- quick path from app launch to the first shot
+- no doubt about whether the device is ready
 
-### 4. Schläge live erfassen
+### 4. Capture Shots Live
 
 **Situation**
 
-Das Training läuft, Bri schlägt Bälle.
+Training is underway and Bri is hitting balls.
 
-**Ziel der Nutzerin**
+**User Goal**
 
-Direktes Feedback pro Schlag und sichere Speicherung.
+Immediate feedback per shot and reliable storage.
 
 **Flow**
 
-1. Nach jedem Schlag kommt das Shot-Event vom Mevo+.
-2. Die App parst Ball-, Club- und falls vorhanden FIL-Daten.
-3. Der letzte Schlag erscheint prominent im Dashboard.
-4. Der Schlag wird Session und Club zugeordnet.
-5. Die Daten werden lokal in SQLite gespeichert.
+1. After each shot, the shot event comes from the Mevo+.
+2. The app parses ball, club, and, if present, FIL data.
+3. The last shot appears prominently in the dashboard.
+4. The shot is assigned to the session and club.
+5. The data is stored locally in SQLite.
 
-**Nutzererwartung**
+**User Expectation**
 
-- schnelle Rückmeldung
-- gut lesbare Kernmetriken
-- Hinweis, wenn Spin geschätzt ist
-- keine verlorenen Daten bei Verbindungs- oder App-Problemen
+- fast feedback
+- readable core metrics
+- hint when spin is estimated
+- no lost data during connection or app issues
 
-### 5. Mit Zielbereichen trainieren
+### 5. Train with Target Ranges
 
 **Situation**
 
-Nur Daten zu sehen reicht Bri nicht. Sie will wissen, ob ein Schlag trainiert richtig war.
+Seeing data alone is not enough for Bri. She wants to know whether a shot was technically correct for training.
 
-**Ziel der Nutzerin**
+**User Goal**
 
-Persönliche Zielbereiche pro Schläger und Metrik nutzen.
+Use personal target ranges per club and metric.
 
 **Flow**
 
-1. Bri definiert Margins pro Club, z. B. für Carry, AoA, Spin oder Face-to-Path.
-2. Die App speichert Min-/Max-Werte je Metrik.
-3. Neue Schläge werden live gegen diese Zielbereiche geprüft.
-4. Treffer und Abweichungen werden visuell markiert.
+1. Bri defines margins per club, for example for carry, AoA, spin, or face-to-path.
+2. The app stores min/max values per metric.
+3. New shots are checked live against these target ranges.
+4. Hits and deviations are marked visually.
 
-**Nutzererwartung**
+**User Expectation**
 
-- persönliches Feedback statt Standardnormen
-- schnelle Entscheidung: gut, knapp daneben oder klar verfehlt
-- Training entlang echter Ziele
+- personal feedback instead of standard norms
+- quick decision: good, just off, or clearly missed
+- training aligned with real goals
 
-### 6. Session analysieren
+### 6. Analyze the Session
 
 **Situation**
 
-Nach einer Serie von Schlägen will Bri wissen, ob das Training wirklich stabil war.
+After a series of shots, Bri wants to know whether the training was actually stable.
 
-**Ziel der Nutzerin**
+**User Goal**
 
-Session-Leistung kompakt verstehen.
+Understand session performance compactly.
 
 **Flow**
 
-1. Bri öffnet die Session-Details.
-2. Die App zeigt Durchschnittswerte, Streuung und Zieltrefferquote.
-3. Werte können pro Session und pro Club gelesen werden.
-4. Bri erkennt Stabilität, Ausreisser und Trainingsmuster.
+1. Bri opens the session details.
+2. The app shows average values, dispersion, and target hit rate.
+3. Values can be read per session and per club.
+4. Bri recognizes stability, outliers, and training patterns.
 
-**Nutzererwartung**
+**User Expectation**
 
-- keine Datenflut
-- schnelle Lesbarkeit
-- hilfreiche Verdichtung statt Rohdatenliste
+- no data flood
+- quick readability
+- helpful condensation instead of a raw data list
 
-### 7. Dispersion und Historie nutzen
+### 7. Use Dispersion and History
 
 **Situation**
 
-Bri will nicht nur Zahlen sehen, sondern Ballflug-Muster und Entwicklung erkennen.
+Bri does not just want to see numbers, but recognize ball-flight patterns and development.
 
-**Ziel der Nutzerin**
+**User Goal**
 
-Trainingsdaten visuell und über mehrere Sessions hinweg verstehen.
+Understand training data visually and across multiple sessions.
 
 **Flow**
 
-1. Bri betrachtet die Dispersion einer Session als visuelles Treffbild.
-2. Sie sieht in der Historie frühere Sessions chronologisch geordnet.
-3. Sie öffnet einzelne Sessions erneut und vergleicht Schlaganzahl, Carry und weitere Kennzahlen.
-4. Trend-Charts zeigen die Entwicklung wichtiger Metriken über mehrere Sessions.
+1. Bri views the dispersion of a session as a visual shot pattern.
+2. She sees earlier sessions in history sorted chronologically.
+3. She reopens individual sessions and compares shot count, carry, and other metrics.
+4. Trend charts show the development of important metrics across multiple sessions.
 
-**Nutzererwartung**
+**User Expectation**
 
-- schneller Blick auf Streuung und Schlagmuster
-- Auffindbarkeit alter Sessions
-- sichtbarer Fortschritt über Zeit
+- quick view of dispersion and shot patterns
+- easy retrieval of older sessions
+- visible progress over time
 
-## Ergebnis nach v1 (MVP)
+## Outcome After v1 (MVP)
 
-Am Ende von `v1` ist die App für Bri ein voll nutzbares Trainingswerkzeug:
+At the end of `v1`, the app is a fully usable training tool for Bri:
 
-- Mevo+ verbinden
-- Session starten
-- Schläge live sehen und lokal speichern
-- persönliche Zielbereiche verwenden
-- Sessions analysieren
-- Dispersion, Historie und Trends für Technikarbeit nutzen
+- connect the Mevo+
+- start a session
+- see shots live and store them locally
+- use personal target ranges
+- analyze sessions
+- use dispersion, history, and trends for technical work
 
-## Erweiterung in v2
+## Expansion in v2
 
-Mit `v2` verschiebt sich der Schwerpunkt von reiner Datenauswertung zu reichhaltiger Dokumentation und langfristiger Nutzbarkeit.
+With `v2`, the focus shifts from pure data evaluation to richer documentation and long-term usability.
 
-### 8. Video zum Schlag aufnehmen
+### 8. Record Video for a Shot
 
 **Situation**
 
-Bri will nicht nur Metriken, sondern auch den Schwung selbst sehen.
+Bri wants to see not only metrics, but also the swing itself.
 
-**Ziel der Nutzerin**
+**User Goal**
 
-Zu einem Schlag einen passenden Clip erhalten.
+Get a matching clip for a shot.
 
 **Flow**
 
-1. Bri trainiert weiter im Session-Modus.
-2. Die App nimmt Video im Trainingskontext auf oder puffert es für Schlag-Trigger.
-3. Beim Shot-Event wird ein Clip zum Schlag erzeugt.
-4. Der Clip wird lokal gespeichert und mit dem Schlag verknüpft.
+1. Bri continues training in session mode.
+2. The app records video in the training context or buffers it for shot triggers.
+3. When the shot event arrives, a clip is created for the shot.
+4. The clip is stored locally and linked to the shot.
 
-**Nutzererwartung**
+**User Expectation**
 
-- möglichst automatische Zuordnung
-- kein manueller Dateichaos-Workflow
-- technische Daten und Video gehören zusammen
+- as much automatic assignment as possible
+- no manual file-chaos workflow
+- technical data and video belong together
 
-### 9. Schlag mit Video ansehen
+### 9. View a Shot with Video
 
 **Situation**
 
-Nach einem auffälligen oder guten Schlag will Bri verstehen, was im Schwung passiert ist.
+After a noticeable or particularly good shot, Bri wants to understand what happened in the swing.
 
-**Ziel der Nutzerin**
+**User Goal**
 
-Video und Launch-Daten gemeinsam lesen.
+Read video and launch data together.
 
 **Flow**
 
-1. Bri öffnet einen Schlag oder eine Session-Detailansicht.
-2. Die App zeigt den Clip zusammen mit den Metriken.
-3. Sie spielt den Schlag in normaler Geschwindigkeit oder in Slow Motion ab.
-4. Scrubbing hilft beim genauen Blick auf relevante Bewegungsmomente.
+1. Bri opens a shot or a session detail view.
+2. The app shows the clip together with the metrics.
+3. She plays the shot at normal speed or in slow motion.
+4. Scrubbing helps inspect relevant movement moments precisely.
 
-**Nutzererwartung**
+**User Expectation**
 
-- direkter Zusammenhang zwischen Bild und Daten
-- einfaches Wiederfinden guter und schlechter Schläge
-- weniger Wechsel zwischen mehreren Apps
+- direct relationship between image and data
+- easy retrieval of good and bad shots
+- fewer switches between multiple apps
 
-### 10. Schwung markieren und vergleichen
+### 10. Mark and Compare the Swing
 
 **Situation**
 
-Bri arbeitet gezielt an Technikveränderungen wie Early Extension oder AoA.
+Bri is working deliberately on technical changes such as early extension or AoA.
 
-**Ziel der Nutzerin**
+**User Goal**
 
-Bewegungen sichtbar markieren und zwei Schläge direkt gegenüberstellen.
+Make movements visibly measurable and compare two shots directly.
 
 **Flow**
 
-1. Bri friert einen Frame ein.
-2. Sie setzt Linien oder Punkte, z. B. für Kopf, Hüfte oder Schwungebene.
-3. Sie öffnet zwei Schläge im Vergleich.
-4. Die App zeigt beide Clips nebeneinander.
-5. Bri sieht, ob Veränderungen über Zeit wirklich sichtbar sind.
+1. Bri freezes a frame.
+2. She places lines or points, for example for head, hips, or swing plane.
+3. She opens two shots in comparison.
+4. The app shows both clips side by side.
+5. Bri sees whether changes are actually visible over time.
 
-**Nutzererwartung**
+**User Expectation**
 
-- greifbare Technikarbeit
-- klares Vorher-Nachher
-- keine externe Video-App notwendig
+- tangible technical work
+- clear before/after view
+- no external video app required
 
-### 11. Daten lokal und in der Cloud verfügbar halten
+### 11. Keep Data Available Locally and in the Cloud
 
 **Situation**
 
-Bri trainiert nicht immer mit stabiler Verbindung, will aber Daten nicht auf ein einzelnes Gerät beschränken.
+Bri does not always train with a stable connection, but she does not want data limited to a single device.
 
-**Ziel der Nutzerin**
+**User Goal**
 
-Offline arbeiten und bei Bedarf syncen.
+Work offline and sync when needed.
 
 **Flow**
 
-1. Die App speichert weiterhin alles lokal als primäre Quelle.
-2. Wenn Bri online ist, startet sie einen Sync oder bekommt Sync-Status angezeigt.
-3. Sessions, Schläge, Clubs und Margins werden zu Supabase übertragen.
-4. Die App merkt sich den letzten erfolgreichen Sync.
+1. The app continues to store everything locally as the primary source.
+2. When Bri is online, she starts a sync or sees sync status.
+3. Sessions, shots, clubs, and margins are uploaded to Supabase.
+4. The app remembers the last successful sync.
 
-**Nutzererwartung**
+**User Expectation**
 
-- Offline-First bleibt unangetastet
-- Cloud ist Zusatznutzen, nicht Voraussetzung
-- Sync muss transparent und kontrollierbar sein
+- offline-first remains untouched
+- cloud is additional value, not a requirement
+- sync must be transparent and controllable
 
-### 12. Export und Multi-Device nutzen
+### 12. Use Export and Multi-Device
 
 **Situation**
 
-Mit zunehmender Nutzung will Bri ihre Daten ausserhalb der App verwenden oder auf mehreren Geräten verfügbar haben.
+As usage grows, Bri wants to use her data outside the app or across multiple devices.
 
-**Ziel der Nutzerin**
+**User Goal**
 
-Mehr Freiheit in der Nutzung ihrer Trainingsdaten.
+More freedom in how she uses her training data.
 
 **Flow**
 
-1. Bri exportiert Sessions oder Schlaghistorien als CSV.
-2. Sie nutzt die Daten in Excel, Numbers oder anderen Analyse-Tools weiter.
-3. Später greift sie über mehrere Geräte auf synchronisierte Daten zu.
-4. Die App wird damit Teil eines grösseren Trainings-Setups.
+1. Bri exports sessions or shot histories as CSV.
+2. She continues using the data in Excel, Numbers, or other analysis tools.
+3. Later, she accesses synced data across multiple devices.
+4. The app becomes part of a larger training setup.
 
-**Nutzererwartung**
+**User Expectation**
 
-- keine Datensilos
-- einfache Weiterverarbeitung
-- Flexibilität zwischen Trainingsgeräten
+- no data silos
+- easy further processing
+- flexibility between training devices
 
-## Ergebnis nach v2
+## Outcome After v2
 
-Am Ende von `v2` ist die App für Bri nicht nur ein Trainings-Dashboard, sondern eine vollwertige Trainingsplattform:
+At the end of `v2`, the app is not just a training dashboard for Bri, but a full training platform:
 
-- Live-Daten und Analyse bleiben der Kern
-- Video erweitert die Daten um sichtbare Bewegung
-- Sync und Export machen das Training dauerhaft nutzbar
-- die App funktioniert sowohl im Moment des Schlages als auch in der späteren Auswertung
+- live data and analysis remain the core
+- video extends the data with visible movement
+- sync and export make training permanently usable
+- the app works both in the moment of the shot and during later analysis
 
-## Zentrale UX-Anforderungen aus dieser Journey
+## Central UX Requirements from This Journey
 
-- Der Weg zum ersten Schlag muss extrem kurz bleiben.
-- Verbindung, Aufnahme und Sync müssen jederzeit eindeutig sichtbar sein.
-- Live-Feedback darf nie von Sekundärfunktionen verdrängt werden.
-- Zielbereiche müssen pro Club einfach pflegbar und im Training sofort lesbar sein.
-- Video muss sich natürlich an Schläge anhängen, nicht wie ein separater Modus wirken.
-- Offline-First darf durch Cloud-Funktionen nicht aufgeweicht werden.
-- Historie, Trends, Videovergleich und Export müssen auf echte Trainingsentscheidungen einzahlen.
+- The path to the first shot must remain extremely short.
+- Connection, recording, and sync must always be clearly visible.
+- Live feedback must never be displaced by secondary functions.
+- Target ranges must be easy to maintain per club and immediately readable in training.
+- Video must attach naturally to shots, not feel like a separate mode.
+- Offline-first must not be diluted by cloud features.
+- History, trends, video comparison, and export must support real training decisions.
 
-## Abgrenzung
+## Scope Boundaries
 
-Nicht Teil dieser Journey:
+Not part of this journey:
 
-- AI Swing Analysis
-- D-Plane-Visualisierung
-- Trainingsprogramme
-- Coach View
-- Voice Notes
-- Shot-Shaping-Auswertung als eigenes Modul
-- weitere Launch Monitors
-- Platzrundenmanagement
+- AI swing analysis
+- D-plane visualization
+- training programs
+- coach view
+- voice notes
+- shot-shaping evaluation as its own module
+- additional launch monitors
+- round management
