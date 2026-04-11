@@ -2,7 +2,7 @@
   "expo": {
     "name": "Launch Monitor",
     "slug": "launch-app",
-    "version": "1.0.0",
+    "version": "0.1.1",
     "orientation": "portrait",
     "scheme": "launchapp",
     "icon": "./assets/branding/app-icon.png",
