@@ -202,7 +202,7 @@ export default function EquipmentScreen() {
     <SafeAreaView style={s.safe} edges={['top']}>
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
         <Text style={s.eyebrow}>Equipment</Text>
-        <Text style={s.title}>Schläger verwalten statt nur anzeigen</Text>
+        <Text style={s.title}>Schläger verwalten</Text>
         <Text style={s.subtitle}>
           Namen, Art, Loft, Länge und Hersteller sauber pflegen. Archivierte Schläger bleiben erhalten, verschwinden aber aus dem aktiven Training.
         </Text>

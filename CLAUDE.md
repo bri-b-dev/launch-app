@@ -52,11 +52,27 @@ FIL (`hasFaceImpact`): `faceImpactX`, `faceImpactY`
 
 ---
 
-## Aktuelle Phase: Phase 1
+## Wichtige Referenz-Dateien
 
-Verbindung, Schlagerfassung, Dashboard, DB, Auth, Equipment.
+- **Roadmap:** `docs/roadmap.html` — Phasen, Feature-Status (done/partial/wip), nächste Schritte
+- **User Journeys:**
+  - `docs/user-journey-v1.md` — MVP (Phase 1 + 2): Auth, Equipment, Session, Analyse
+  - `docs/user-journey-v2.md` — v1 + v2: Video, Cloud, Sync, Export
+  - `docs/user-journey-v3.md` — v1 + v2 + v3: KI-Analyse, Trainingsprogramme, Coach View
+- **Supabase-Migrationen:** `supabase/migrations/` — SQL-Schema-History, RLS-Policies
 
-**Offene TODOs:**
+---
+
+## Aktuelle Phase: Phase 2 (Abschluss) → Phase 3 vorbereiten
+
+Phase 1 vollständig abgeschlossen. Phase 2 weitgehend done.
+
+**Phase 2 — Offene Punkte:**
+- [ ] Trend Charts: Linien-/Balkendiagramm-Komponente fehlt noch (victory-native installiert, Hook `useClubSessionStats()` fertig)
+- [ ] Trend-Screen übergreifend (mehrere Metriken wählbar) fehlt
+- [ ] Face Impact View: Protokoll-Byte-Offsets unverifiziert, keine DB-Felder, keine Visualisierung (FIL add-on abhängig)
+
+**Offene Hardware-TODOs (Phase 1 carry-over):**
 - [ ] Protokoll-Byte-Offsets mit echtem Gerät verifizieren (besonders FIL-Felder)
 - [ ] Shot-Event-Timing-Offset als Konstante definieren
 - [ ] Port 8080 Camera Stream verifizieren
@@ -72,4 +88,4 @@ Supabase, Expo Bare, kein Expo Go, Android only, offline-first, eigene Library, 
 
 ## Swing-Kontext (für Analyse-Features)
 
-Spielerin Bri, Draw-Spielerin. Problem: Early Extension + steiler AoA. Übungsgedanke: „Knie an Knie". 7-Wood bekannter Problemschläger. Zielwerte: TrackMan Tour-Durchschnitt mit Draw-Bias (negative Spinachse).
+Spielerin Bri, Draw-Spielerin im Hinterkopf, aber nicht ausschließlich. Problem: Early Extension + steiler AoA. Übungsgedanke: „Knie an Knie". 7-Wood bekannter Problemschläger. Zielwerte: TrackMan Tour-Durchschnitt mit Draw-Bias (negative Spinachse).
