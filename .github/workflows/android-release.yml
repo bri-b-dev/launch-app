@@ -49,6 +49,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate required secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          [[ -z "${EXPO_PUBLIC_SUPABASE_URL:-}" ]] && missing+=("EXPO_PUBLIC_SUPABASE_URL")
+          [[ -z "${EXPO_PUBLIC_SUPABASE_KEY:-}" ]] && missing+=("EXPO_PUBLIC_SUPABASE_KEY")
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            echo "::error::Required secrets are not set: ${missing[*]}"
+            echo "Set them under Settings → Secrets and variables → Actions in the repository."
+            exit 1
+          fi
+
       - name: Generate Android project
         run: npx expo prebuild --platform android --non-interactive
 
