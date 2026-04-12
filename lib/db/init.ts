@@ -63,6 +63,34 @@ export async function initializeDatabase(db: SQLiteDatabase): Promise<void> {
       hla REAL,
       spin_axis REAL
     );
+
+    CREATE TABLE IF NOT EXISTS debug_shot_events (
+      id TEXT PRIMARY KEY NOT NULL,
+      created_at TEXT NOT NULL,
+      club_id TEXT NOT NULL DEFAULT '',
+      session_id TEXT NOT NULL DEFAULT '',
+      connection_state TEXT NOT NULL,
+      persist_status TEXT NOT NULL DEFAULT 'logged',
+      persisted_shot_id TEXT,
+      error_message TEXT,
+      ball_speed_mph REAL NOT NULL,
+      club_speed_mph REAL,
+      vertical_launch_angle REAL NOT NULL,
+      horizontal_launch_angle REAL NOT NULL,
+      total_spin REAL NOT NULL,
+      spin_axis REAL NOT NULL,
+      carry_distance_yards REAL NOT NULL,
+      is_estimated_spin INTEGER NOT NULL DEFAULT 0,
+      has_club_data INTEGER NOT NULL DEFAULT 0,
+      angle_of_attack REAL,
+      club_path REAL,
+      face_to_target REAL,
+      dynamic_loft REAL,
+      spin_loft REAL,
+      has_face_impact INTEGER NOT NULL DEFAULT 0,
+      face_impact_x REAL,
+      face_impact_y REAL
+    );
   `);
 
   await ensureColumn(db, 'shots', 'session_id', "TEXT NOT NULL DEFAULT ''");

@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
-import type { ShotData } from '../types/shot';
+import type { ConnectionState, ShotData } from '../types/shot';
 
 export interface DbClub {
   id: string;
@@ -62,6 +62,41 @@ export interface DbShot {
   accent: 'green' | 'blue' | 'gold' | 'orange';
   hla: number | null;
   spin_axis: number | null;
+}
+
+export interface DbShotDebugEvent {
+  id: string;
+  created_at: string;
+  club_id: string;
+  session_id: string;
+  connection_state: ConnectionState;
+  persist_status: 'logged' | 'persisted' | 'persist_failed';
+  persisted_shot_id: string | null;
+  error_message: string | null;
+  ball_speed_mph: number;
+  club_speed_mph: number | null;
+  vertical_launch_angle: number;
+  horizontal_launch_angle: number;
+  total_spin: number;
+  spin_axis: number;
+  carry_distance_yards: number;
+  is_estimated_spin: number;
+  has_club_data: number;
+  angle_of_attack: number | null;
+  club_path: number | null;
+  face_to_target: number | null;
+  dynamic_loft: number | null;
+  spin_loft: number | null;
+  has_face_impact: number;
+  face_impact_x: number | null;
+  face_impact_y: number | null;
+}
+
+interface ShotDebugDraft {
+  clubId: string;
+  sessionId: string | null;
+  connectionState: ConnectionState;
+  shot: ShotData;
 }
 
 export interface ShotStats {
@@ -745,7 +780,91 @@ export function useShotCapture() {
     });
 
     bumpRevision();
+    return shotId;
   }, [bumpRevision, db]);
 
-  return { persistShot };
+  const logShotDebugEvent = useCallback(async ({ clubId, sessionId, connectionState, shot }: ShotDebugDraft) => {
+    const eventId = createId('debug-shot');
+
+    await db.runAsync(
+      `INSERT INTO debug_shot_events (
+        id, created_at, club_id, session_id, connection_state, persist_status, persisted_shot_id,
+        error_message, ball_speed_mph, club_speed_mph, vertical_launch_angle, horizontal_launch_angle,
+        total_spin, spin_axis, carry_distance_yards, is_estimated_spin, has_club_data, angle_of_attack,
+        club_path, face_to_target, dynamic_loft, spin_loft, has_face_impact, face_impact_x, face_impact_y
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      eventId,
+      new Date().toISOString(),
+      clubId,
+      sessionId ?? '',
+      connectionState,
+      'logged',
+      null,
+      null,
+      shot.ballSpeedMph,
+      shot.clubSpeedMph ?? null,
+      shot.verticalLaunchAngle,
+      shot.horizontalLaunchAngle,
+      shot.totalSpin,
+      shot.spinAxis,
+      shot.carryDistanceYards,
+      shot.isEstimatedSpin ? 1 : 0,
+      shot.hasClubData ? 1 : 0,
+      shot.angleOfAttack ?? null,
+      shot.clubPath ?? null,
+      shot.faceToTarget ?? null,
+      shot.dynamicLoft ?? null,
+      shot.spinLoft ?? null,
+      shot.hasFaceImpact ? 1 : 0,
+      shot.faceImpactX ?? null,
+      shot.faceImpactY ?? null,
+    );
+
+    bumpRevision();
+    return eventId;
+  }, [bumpRevision, db]);
+
+  const markShotDebugPersisted = useCallback(async (eventId: string, persistedShotId: string) => {
+    await db.runAsync(
+      `UPDATE debug_shot_events
+       SET persist_status = ?, persisted_shot_id = ?, error_message = NULL
+       WHERE id = ?`,
+      'persisted',
+      persistedShotId,
+      eventId,
+    );
+    bumpRevision();
+  }, [bumpRevision, db]);
+
+  const markShotDebugPersistFailed = useCallback(async (eventId: string, errorMessage: string) => {
+    await db.runAsync(
+      `UPDATE debug_shot_events
+       SET persist_status = ?, error_message = ?
+       WHERE id = ?`,
+      'persist_failed',
+      errorMessage,
+      eventId,
+    );
+    bumpRevision();
+  }, [bumpRevision, db]);
+
+  return {
+    persistShot,
+    logShotDebugEvent,
+    markShotDebugPersisted,
+    markShotDebugPersistFailed,
+  };
+}
+
+export function useRecentShotDebugEvents(limit = 8) {
+  const db = useSQLiteContext();
+
+  return useAsyncRows<DbShotDebugEvent>(`debug-shot-events-${limit}`, async () =>
+    db.getAllAsync<DbShotDebugEvent>(
+      `SELECT * FROM debug_shot_events
+       ORDER BY datetime(created_at) DESC
+       LIMIT ?`,
+      limit,
+    ),
+  );
 }

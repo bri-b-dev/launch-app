@@ -17,7 +17,14 @@ import { router } from 'expo-router';
 import type { Href } from 'expo-router';
 import type { ConnectionState } from '../../lib/types/shot';
 import { useTrainingState } from '../../lib/hooks/use-training-state';
-import { type DbClub, useClubs, useClubShots, useMargins } from '../../lib/hooks/use-sqlite-training';
+import {
+  type DbClub,
+  type DbShotDebugEvent,
+  useClubs,
+  useClubShots,
+  useMargins,
+  useRecentShotDebugEvents,
+} from '../../lib/hooks/use-sqlite-training';
 import { useMevoSession } from '../../lib/hooks/use-mevo-session';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -54,6 +61,18 @@ const FONT = {
 } as const;
 
 const CONNECTOR_SUPPORTED = Platform.OS !== 'web';
+
+function formatEventTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return 'Zeit unbekannt';
+  }
+  return date.toLocaleTimeString('de-DE', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -115,6 +134,7 @@ export default function DashboardScreen() {
   const activeClub = clubs.find((club) => club.id === activeClubId) ?? clubs[0] ?? null;
   const { rows: targets } = useMargins(activeClub?.id ?? null);
   const { rows: recentShots } = useClubShots(activeClub?.id ?? null);
+  const { rows: debugShotEvents } = useRecentShotDebugEvents(8);
 
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -387,6 +407,33 @@ export default function DashboardScreen() {
               />
             ))}
           </ScrollView>
+        </View>
+
+        <View style={s.panel}>
+          <View style={s.panelHeader}>
+            <Text style={s.panelEyebrow}>Debug</Text>
+            <Text style={s.panelTitle}>Shot-Events vom Mevo+</Text>
+          </View>
+          <View style={s.priorityRow}>
+            <PriorityChip label="Hook Shots" value={String(shotCount)} tone="gold" />
+            <PriorityChip label="Debug Events" value={String(debugShotEvents.length)} tone="draw" />
+            <PriorityChip
+              label="Letztes Event"
+              value={debugShotEvents[0] != null ? formatEventTime(debugShotEvents[0].created_at) : '—'}
+              tone="teal"
+            />
+          </View>
+          {debugShotEvents.length === 0 ? (
+            <Text style={s.targetNote}>
+              Noch keine Shot-Events geloggt. Wenn hier nach einem Schlag nichts auftaucht, kam in der App kein Event vom Mevo+ an.
+            </Text>
+          ) : (
+            <View style={s.debugEventList}>
+              {debugShotEvents.map((event) => (
+                <DebugShotEventCard key={event.id} event={event} />
+              ))}
+            </View>
+          )}
         </View>
 
         <View style={s.panel}>
@@ -707,6 +754,62 @@ function RecentShotCard({
       <Text style={s.recentShotCarry}>{carry}</Text>
       <Text style={s.recentShotShape}>{shape}</Text>
       <Text style={s.recentShotNote}>{note}</Text>
+    </View>
+  );
+}
+
+function DebugShotEventCard({ event }: Readonly<{ event: DbShotDebugEvent }>) {
+  const statusColor =
+    event.persist_status === 'persisted'
+      ? C.success
+      : event.persist_status === 'persist_failed'
+        ? C.danger
+        : C.warning;
+
+  const estimatedSpinLabel = event.is_estimated_spin === 1 ? 'Spin geschätzt' : 'Spin gemessen';
+
+  return (
+    <View style={s.debugEventCard}>
+      <View style={s.debugEventTop}>
+        <View>
+          <Text style={s.debugEventTime}>{formatEventTime(event.created_at)}</Text>
+          <Text style={s.debugEventMeta}>
+            {event.club_id || 'ohne Club'} · {event.connection_state}
+          </Text>
+        </View>
+        <View style={[s.debugStatusBadge, { borderColor: `${statusColor}55`, backgroundColor: `${statusColor}14` }]}>
+          <Text style={[s.debugStatusText, { color: statusColor }]}>{event.persist_status}</Text>
+        </View>
+      </View>
+
+      <View style={s.debugMetricGrid}>
+        <Text style={s.debugMetricItem}>Carry {event.carry_distance_yards.toFixed(1)}y</Text>
+        <Text style={s.debugMetricItem}>Ball {event.ball_speed_mph.toFixed(1)} mph</Text>
+        <Text style={s.debugMetricItem}>Spin {Math.round(event.total_spin)} rpm</Text>
+        <Text style={s.debugMetricItem}>
+          Axis {event.spin_axis > 0 ? '+' : ''}{event.spin_axis.toFixed(1)}°
+        </Text>
+        <Text style={s.debugMetricItem}>
+          HLA {event.horizontal_launch_angle > 0 ? '+' : ''}{event.horizontal_launch_angle.toFixed(1)}°
+        </Text>
+        <Text style={s.debugMetricItem}>VLA {event.vertical_launch_angle.toFixed(1)}°</Text>
+        {event.club_speed_mph != null && (
+          <Text style={s.debugMetricItem}>Club {event.club_speed_mph.toFixed(1)} mph</Text>
+        )}
+        {event.angle_of_attack != null && (
+          <Text style={s.debugMetricItem}>
+            AoA {event.angle_of_attack > 0 ? '+' : ''}{event.angle_of_attack.toFixed(1)}°
+          </Text>
+        )}
+      </View>
+
+      <Text style={s.debugEventMeta}>
+        {estimatedSpinLabel}
+        {event.session_id ? ` · ${event.session_id}` : ' · keine Session'}
+      </Text>
+      {event.error_message != null && (
+        <Text style={s.debugEventError}>{event.error_message}</Text>
+      )}
     </View>
   );
 }
@@ -1061,6 +1164,9 @@ const s = StyleSheet.create({
     gap: 10,
     paddingRight: 4,
   },
+  debugEventList: {
+    gap: 10,
+  },
   targetCard: {
     backgroundColor: C.card,
     borderRadius: 16,
@@ -1128,6 +1234,64 @@ const s = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     color: C.textMuted,
+  },
+  debugEventCard: {
+    backgroundColor: C.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: C.border,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    gap: 10,
+  },
+  debugEventTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  debugEventTime: {
+    fontFamily: FONT.mono,
+    fontSize: 14,
+    color: C.text,
+    marginBottom: 3,
+  },
+  debugEventMeta: {
+    fontFamily: FONT.body,
+    fontSize: 12,
+    color: C.textSecondary,
+    lineHeight: 17,
+  },
+  debugStatusBadge: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  debugStatusText: {
+    fontFamily: FONT.mono,
+    fontSize: 10,
+    letterSpacing: 1,
+  },
+  debugMetricGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  debugMetricItem: {
+    fontFamily: FONT.mono,
+    fontSize: 12,
+    color: C.text,
+    backgroundColor: C.surface,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  debugEventError: {
+    fontFamily: FONT.body,
+    fontSize: 12,
+    color: C.danger,
+    lineHeight: 17,
   },
   workAreaCard: {
     backgroundColor: C.card,

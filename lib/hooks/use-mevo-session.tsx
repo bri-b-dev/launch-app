@@ -201,34 +201,83 @@ function LiveMevoSessionProvider({ children }: Readonly<{ children: React.ReactN
     disconnect: liveMevo.disconnect,
     isMock: false,
   } satisfies MevoSessionValue;
-  const { persistShot } = useShotCapture();
-  const lastPersistedSignature = useRef<string | null>(null);
+  const {
+    persistShot,
+    logShotDebugEvent,
+    markShotDebugPersisted,
+    markShotDebugPersistFailed,
+  } = useShotCapture();
+  const lastHandledSignature = useRef<string | null>(null);
 
   useEffect(() => {
-    if (mevo.lastShot == null || activeSessionId == null) {
+    if (mevo.lastShot == null) {
       return;
     }
 
+    const shot = mevo.lastShot;
     const signature = JSON.stringify({
+      state: mevo.state,
       sessionId: activeSessionId,
       clubId: activeClubId,
-      carry: mevo.lastShot.carryDistanceYards,
-      spinAxis: mevo.lastShot.spinAxis,
-      spin: mevo.lastShot.totalSpin,
-      ballSpeed: mevo.lastShot.ballSpeedMph,
-      clubSpeed: mevo.lastShot.clubSpeedMph ?? null,
+      carry: shot.carryDistanceYards,
+      spinAxis: shot.spinAxis,
+      spin: shot.totalSpin,
+      ballSpeed: shot.ballSpeedMph,
+      clubSpeed: shot.clubSpeedMph ?? null,
     });
 
-    if (lastPersistedSignature.current === signature) {
+    if (lastHandledSignature.current === signature) {
       return;
     }
 
-    lastPersistedSignature.current = signature;
-    persistShot(activeClubId, mevo.lastShot, activeSessionId).catch((err) => {
-      console.error('[Mevo] Shot-Persistenz fehlgeschlagen:', err);
-      lastPersistedSignature.current = null;
-    });
-  }, [activeClubId, activeSessionId, mevo.lastShot, persistShot]);
+    lastHandledSignature.current = signature;
+
+    let debugEventId: string | null = null;
+
+    logShotDebugEvent({
+      clubId: activeClubId,
+      sessionId: activeSessionId,
+      connectionState: mevo.state,
+      shot,
+    })
+      .then(async (eventId) => {
+        debugEventId = eventId;
+        console.log('[Mevo] Shot erkannt:', {
+          eventId,
+          state: mevo.state,
+          clubId: activeClubId,
+          sessionId: activeSessionId,
+          carry: shot.carryDistanceYards,
+          ballSpeed: shot.ballSpeedMph,
+          spin: shot.totalSpin,
+          spinAxis: shot.spinAxis,
+        });
+
+        if (activeSessionId == null) {
+          return;
+        }
+
+        const persistedShotId = await persistShot(activeClubId, shot, activeSessionId);
+        await markShotDebugPersisted(eventId, persistedShotId);
+      })
+      .catch(async (err) => {
+        const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+        console.error('[Mevo] Shot-Debug/Persistenz fehlgeschlagen:', err);
+        if (debugEventId != null) {
+          await markShotDebugPersistFailed(debugEventId, message);
+        }
+        lastHandledSignature.current = null;
+      });
+  }, [
+    activeClubId,
+    activeSessionId,
+    logShotDebugEvent,
+    markShotDebugPersistFailed,
+    markShotDebugPersisted,
+    mevo.lastShot,
+    mevo.state,
+    persistShot,
+  ]);
 
   const value = useMemo(() => mevo, [mevo]);
 
