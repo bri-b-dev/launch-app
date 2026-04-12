@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../supabase/client';
+import { getSupabaseConfigError, supabase } from '../supabase/client';
 
 interface AuthState {
   session: Session | null;
@@ -21,6 +21,11 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const signingOut = useRef(false);
 
   useEffect(() => {
+    if (supabase == null) {
+      setLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setLoading(false);
@@ -42,11 +47,19 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   }, []);
 
   async function signIn(email: string, password: string): Promise<string | null> {
+    if (supabase == null) {
+      return getSupabaseConfigError();
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return error?.message ?? null;
   }
 
   async function signUp(email: string, password: string): Promise<string | null> {
+    if (supabase == null) {
+      return getSupabaseConfigError();
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -56,6 +69,10 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   }
 
   async function signOut(): Promise<void> {
+    if (supabase == null) {
+      return;
+    }
+
     signingOut.current = true;
     await supabase.auth.signOut({ scope: 'local' });
   }

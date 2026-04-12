@@ -1,5 +1,5 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { supabase } from './client';
+import { getSupabaseConfigError, supabase } from './client';
 
 export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error';
 
@@ -14,6 +14,10 @@ export async function syncToSupabase(
   userId: string,
 ): Promise<SyncResult> {
   const syncedAt = new Date().toISOString();
+
+  if (supabase == null) {
+    return { status: 'error', error: getSupabaseConfigError(), syncedAt };
+  }
 
   // Refresh token manually (autoRefreshToken is disabled for offline-first operation)
   const { error: refreshError } = await supabase.auth.refreshSession();
