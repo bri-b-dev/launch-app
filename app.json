@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "Launch Monitor",
-    "slug": "launch-app",
-    "version": "0.1.4",
+    "name": "Launcher",
+    "slug": "launcher",
+    "version": "0.1.5",
     "orientation": "portrait",
-    "scheme": "launchapp",
+    "scheme": "launcher",
     "icon": "./assets/branding/app-icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "dev.bri.launchapp"
+      "bundleIdentifier": "dev.bri.launcher"
     },
     "plugins": [
       "expo-router",
@@ -32,7 +32,7 @@
         "monochromeImage": "./assets/branding/app-icon-monochrome.png",
         "backgroundColor": "#0D1821"
       },
-      "package": "dev.bri.launchapp"
+      "package": "dev.bri.launcher"
     }
   }
 }

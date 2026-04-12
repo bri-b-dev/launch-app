@@ -35,7 +35,7 @@ export default function RegisterScreen() {
   if (success) {
     return (
       <View style={[s.root, { justifyContent: 'center', paddingHorizontal: 28 }]}>
-        <Text style={s.title}>Launch Monitor</Text>
+        <Text style={s.title}>Launcher</Text>
         <Text style={s.subtitle}>Check your email</Text>
         <Text style={s.hint}>Confirm your address, then sign in.</Text>
         <Link href="/(auth)/login" asChild>
@@ -53,7 +53,7 @@ export default function RegisterScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={s.content}>
-        <Text style={s.title}>Launch Monitor</Text>
+        <Text style={s.title}>Launcher</Text>
         <Text style={s.subtitle}>Create account</Text>
 
         <View style={s.form}>

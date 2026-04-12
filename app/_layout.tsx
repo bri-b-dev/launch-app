@@ -32,7 +32,7 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <SQLiteProvider databaseName="launch-app.db" onInit={initializeDatabase}>
+    <SQLiteProvider databaseName="launcher.db" onInit={initializeDatabase}>
       <AuthProvider>
         <RootNavigator />
       </AuthProvider>

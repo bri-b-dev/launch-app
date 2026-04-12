@@ -1,6 +1,6 @@
 {
-  "name": "launch-app",
-  "version": "0.1.4‚",
+  "name": "launcher",
+  "version": "0.1.5‚",
   "main": "expo-router/entry",
   "private": true,
   "scripts": {

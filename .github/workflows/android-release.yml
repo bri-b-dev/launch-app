@@ -108,8 +108,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          cp android/app/build/outputs/bundle/release/app-release.aab "dist/launch-monitor-${VERSION_NAME}.aab"
-          cp android/app/build/outputs/apk/release/app-release.apk "dist/launch-monitor-${VERSION_NAME}.apk"
+          cp android/app/build/outputs/bundle/release/app-release.aab "dist/launcher-${VERSION_NAME}.aab"
+          cp android/app/build/outputs/apk/release/app-release.apk "dist/launcher-${VERSION_NAME}.apk"
           ls -lh dist
 
       - name: Upload workflow artifacts

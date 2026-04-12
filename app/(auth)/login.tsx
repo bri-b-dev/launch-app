@@ -33,7 +33,7 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={s.content}>
-        <Text style={s.title}>Launch Monitor</Text>
+        <Text style={s.title}>Launcher</Text>
         <Text style={s.subtitle}>Sign in</Text>
 
         <View style={s.form}>

@@ -32,7 +32,7 @@ Es gab zwei getrennte Probleme:
   - Hermes wurde über `hermes-compiler/package.json` aufgelöst.
   - In diesem Projekt liegt der Hermes-Compiler aber unter `react-native/sdks/hermesc/...`.
 
-- `android/app/src/main/java/dev/bri/launchapp/MainApplication.kt`
+- `android/app/src/main/java/dev/bri/launcher/MainApplication.kt`
   - Der generierte Code benutzte `ExpoReactHostFactory.getDefaultReactHost(...)`.
   - Diese API existiert im aktuell installierten Expo-Stand nicht.
   - Zusätzlich fehlte die Implementierung von `reactNativeHost`, die `ReactApplication` hier verlangt.
@@ -77,7 +77,7 @@ Konsequenz:
 
 - Hermes-Pfad auf das tatsächlich vorhandene Binary unter `react-native/sdks/hermesc/...` umgestellt
 
-### `android/app/src/main/java/dev/bri/launchapp/MainApplication.kt`
+### `android/app/src/main/java/dev/bri/launcher/MainApplication.kt`
 
 - auf `reactNativeHost` + `ReactNativeHostWrapper` + `ExpoReactHostFactory.createFromReactNativeHost(...)` umgestellt
 

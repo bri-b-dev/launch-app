@@ -63,7 +63,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: 'launchapp://confirm' },
+      options: { emailRedirectTo: 'launcher://confirm' },
     });
     return error?.message ?? null;
   }
