@@ -73,7 +73,7 @@ function MetricCard({ label, value, unit }: Readonly<{ label: string; value: str
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#080C10' },
-  content: { padding: 16, paddingBottom: 40 },
+  content: { padding: 16, paddingBottom: 110 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   fallback: { color: '#8DA0B3', fontFamily: FONT.body, fontSize: 16 },
   errorText: { color: '#DE6E63', fontFamily: FONT.body, fontSize: 16, textAlign: 'center' },

@@ -9,11 +9,12 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useAuth } from '../../lib/hooks/use-auth';
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +35,7 @@ export default function LoginScreen() {
     >
       <View style={s.content}>
         <Text style={s.title}>Launcher</Text>
-        <Text style={s.subtitle}>Sign in</Text>
+        <Text style={s.subtitle}>Anmelden</Text>
 
         <View style={s.form}>
           <TextInput
@@ -68,10 +69,16 @@ export default function LoginScreen() {
 
         <Link href="/(auth)/register" asChild>
           <Pressable style={s.linkRow}>
-            <Text style={s.linkText}>No account? </Text>
-            <Text style={[s.linkText, s.linkAccent]}>Register</Text>
+            <Text style={s.linkText}>Noch kein Konto? </Text>
+            <Text style={[s.linkText, s.linkAccent]}>Registrieren</Text>
           </Pressable>
         </Link>
+
+        {router.canGoBack() && (
+          <Pressable style={s.linkRow} onPress={() => router.back()}>
+            <Text style={s.linkText}>Abbrechen</Text>
+          </Pressable>
+        )}
       </View>
     </KeyboardAvoidingView>
   );

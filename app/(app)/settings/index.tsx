@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useAuth } from '../../../lib/hooks/use-auth';
 import { syncToSupabase, type SyncStatus } from '../../../lib/supabase/sync';
@@ -21,6 +22,7 @@ const PLACEHOLDER_SETTINGS = [
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
   const db = useSQLiteContext();
+  const router = useRouter();
 
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
@@ -64,46 +66,60 @@ export default function SettingsScreen() {
             Lokale Trainingsdaten manuell in die Cloud sichern. Nur bei bestehender Internetverbindung ausführen — nicht beim Mevo+ WLAN.
           </Text>
 
-          {lastSyncedAt != null && syncStatus !== 'error' && (
-            <Text style={s.syncTimestamp}>
+          {user != null && lastSyncedAt != null && syncStatus !== 'error' && (
+            <Text style={s.statusLabel}>
               Zuletzt synchronisiert: {new Date(lastSyncedAt).toLocaleString('de-DE')}
             </Text>
           )}
 
-          {syncStatus === 'error' && syncError != null && (
-            <Text style={s.syncError}>{syncError}</Text>
+          {user != null && syncStatus === 'error' && syncError != null && (
+            <Text style={s.errorLabel}>{syncError}</Text>
           )}
+        </View>
 
+        {user == null ? (
+          <Pressable
+            style={({ pressed }) => [s.btnPrimary, pressed && s.btnPressed]}
+            onPress={() => router.push('/(auth)/login')}
+          >
+            <Text style={s.btnPrimaryText}>Anmelden für Cloud-Sync</Text>
+          </Pressable>
+        ) : (
           <Pressable
             style={({ pressed }) => [
-              s.syncButton,
-              syncStatus === 'success' && s.syncButtonSuccess,
-              syncStatus === 'error' && s.syncButtonError,
-              (pressed || syncStatus === 'syncing') && s.syncButtonPressed,
+              s.btnSecondary,
+              syncStatus === 'success' && s.btnSecondarySuccess,
+              syncStatus === 'error' && s.btnSecondaryError,
+              (pressed || syncStatus === 'syncing') && s.btnPressed,
             ]}
             onPress={handleSync}
             disabled={syncStatus === 'syncing'}
           >
             {syncStatus === 'syncing' ? (
-              <ActivityIndicator size="small" color="#5FA7FF" />
+              <ActivityIndicator size="small" color="#EEF3F7" />
             ) : (
               <Text style={[
-                s.syncButtonText,
-                syncStatus === 'success' && s.syncButtonTextSuccess,
-                syncStatus === 'error' && s.syncButtonTextError,
+                s.btnSecondaryText,
+                syncStatus === 'success' && s.btnSecondaryTextSuccess,
+                syncStatus === 'error' && s.btnSecondaryTextError,
               ]}>
                 {syncStatus === 'success' ? 'Synchronisiert' : syncStatus === 'error' ? 'Erneut versuchen' : 'Mit Cloud synchronisieren'}
               </Text>
             )}
           </Pressable>
-        </View>
+        )}
 
-        <View style={s.accountCard}>
-          <Text style={s.accountEmail}>{user?.email}</Text>
-          <Pressable style={s.signOutButton} onPress={signOut}>
-            <Text style={s.signOutText}>Sign out</Text>
-          </Pressable>
-        </View>
+        {user != null && (
+          <View style={s.accountRow}>
+            <Text style={s.accountEmail}>{user.email}</Text>
+            <Pressable
+              style={({ pressed }) => [s.btnDestructive, pressed && s.btnPressed]}
+              onPress={signOut}
+            >
+              <Text style={s.btnDestructiveText}>Abmelden</Text>
+            </Pressable>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -145,58 +161,77 @@ const s = StyleSheet.create({
   },
   settingTitle: { fontFamily: FONT.demi, color: '#EEF3F7', fontSize: 18 },
   settingBody: { fontFamily: FONT.body, color: '#8DA0B3', fontSize: 14, lineHeight: 20 },
-  syncTimestamp: {
+  statusLabel: {
     fontFamily: FONT.mono,
     color: '#4AC18D',
     fontSize: 11,
     letterSpacing: 0.5,
   },
-  syncError: {
+  errorLabel: {
     fontFamily: FONT.body,
     color: '#DE6E63',
     fontSize: 13,
     lineHeight: 18,
   },
-  syncButton: {
-    height: 44,
-    borderWidth: 1,
-    borderColor: '#1E3A5A',
-    borderRadius: 12,
+  // Buttons — clearly distinct from info cards
+  btnPrimary: {
+    height: 52,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0D2038',
-    marginTop: 2,
-  },
-  syncButtonSuccess: {
-    borderColor: '#2A5A3F',
-    backgroundColor: '#0D2218',
-  },
-  syncButtonError: {
-    borderColor: '#5A2A2A',
-    backgroundColor: '#1A0E0E',
-  },
-  syncButtonPressed: { opacity: 0.7 },
-  syncButtonText: { fontFamily: FONT.demi, color: '#5FA7FF', fontSize: 14 },
-  syncButtonTextSuccess: { color: '#4AC18D' },
-  syncButtonTextError: { color: '#E05C5C' },
-  accountCard: {
-    backgroundColor: '#0D1821',
-    borderWidth: 1,
-    borderColor: '#223244',
-    borderRadius: 20,
-    padding: 16,
+    backgroundColor: '#D2B15C',
     marginBottom: 12,
-    gap: 12,
   },
-  accountEmail: { fontFamily: FONT.body, color: '#8DA0B3', fontSize: 14 },
-  signOutButton: {
+  btnPrimaryText: {
+    fontFamily: FONT.demi,
+    color: '#080C10',
+    fontSize: 15,
+    letterSpacing: 0.3,
+  },
+  btnSecondary: {
+    height: 52,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1A3A5C',
+    marginBottom: 12,
+  },
+  btnSecondarySuccess: { backgroundColor: '#1A3D2A' },
+  btnSecondaryError: { backgroundColor: '#3D1A1A' },
+  btnSecondaryText: {
+    fontFamily: FONT.demi,
+    color: '#EEF3F7',
+    fontSize: 15,
+  },
+  btnSecondaryTextSuccess: { color: '#4AC18D' },
+  btnSecondaryTextError: { color: '#E05C5C' },
+  btnDestructive: {
     height: 44,
-    borderWidth: 1,
-    borderColor: '#3A2020',
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1A0E0E',
+    backgroundColor: '#3D1A1A',
+    paddingHorizontal: 20,
+    alignSelf: 'flex-start',
   },
-  signOutText: { fontFamily: FONT.demi, color: '#E05C5C', fontSize: 14 },
+  btnDestructiveText: {
+    fontFamily: FONT.demi,
+    color: '#E05C5C',
+    fontSize: 14,
+  },
+  btnPressed: { opacity: 0.65 },
+  accountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+    marginBottom: 12,
+  },
+  accountEmail: {
+    fontFamily: FONT.body,
+    color: '#53677A',
+    fontSize: 13,
+    flexShrink: 1,
+    marginRight: 12,
+  },
 });

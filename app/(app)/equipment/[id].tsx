@@ -218,7 +218,7 @@ function SessionStat({
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
-  content: { padding: 16, paddingBottom: 40 },
+  content: { padding: 16, paddingBottom: 110 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   fallback: { fontFamily: FONT.body, color: C.muted, fontSize: 14 },
 

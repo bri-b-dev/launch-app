@@ -137,12 +137,15 @@ const s = StyleSheet.create({
     flex: 1,
     marginHorizontal: 3,
     borderRadius: 18,
+    borderWidth: 1,
+    borderColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
   },
   tabButtonActive: {
-    backgroundColor: '#12202B',
+    backgroundColor: '#172B3F',
+    borderColor: 'rgba(210,177,92,0.3)',
   },
   iconCanvas: {
     width: ICON_SIZE,
