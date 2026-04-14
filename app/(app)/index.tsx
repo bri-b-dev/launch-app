@@ -845,7 +845,7 @@ const CARD_WIDTH = (SCREEN_WIDTH - CARD_H_PAD * 2 - CARD_GAP) / 2;
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   scroll: { flex: 1 },
-  content: { paddingBottom: 48 },
+  content: { paddingBottom: 110 },
 
   // Header
   header: {

@@ -495,7 +495,7 @@ function ShapeBar({
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: 16, paddingBottom: 40 },
+  content: { paddingHorizontal: 16, paddingBottom: 110 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
   infoText: { fontFamily: FONT.body, color: C.textSecondary, fontSize: 14 },
   errorText: { fontFamily: FONT.body, color: C.red, fontSize: 14, textAlign: 'center' },
