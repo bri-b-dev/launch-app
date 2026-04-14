@@ -40,7 +40,7 @@ export async function syncToSupabase(
     const results = await Promise.all([
       supabase.from('clubs').upsert(tag(clubs), { onConflict: 'id' }),
       supabase.from('sessions').upsert(tag(sessions), { onConflict: 'id' }),
-      supabase.from('session_clubs').upsert(tag(sessionClubs), { onConflict: 'session_id,club_id' }),
+      supabase.from('session_clubs').upsert(sessionClubs, { onConflict: 'session_id,club_id' }),
       supabase.from('margins').upsert(tag(margins), { onConflict: 'id' }),
       supabase.from('shots').upsert(tag(shots), { onConflict: 'id' }),
     ]);
