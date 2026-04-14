@@ -2,7 +2,7 @@
   "expo": {
     "name": "Launcher",
     "slug": "launcher",
-    "version": "0.1.6",
+    "version": "0.1.8",
     "orientation": "portrait",
     "scheme": "launcher",
     "icon": "./assets/branding/app-icon.png",

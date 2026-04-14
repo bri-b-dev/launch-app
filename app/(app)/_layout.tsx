@@ -91,7 +91,7 @@ function TabButton({
   onLongPress,
 }: BottomTabBarButtonProps & Readonly<{ label: string; icon: TabIconName }>) {
   const focused = accessibilityState?.selected === true;
-  const iconColor = focused ? '#D2B15C' : '#53677A';
+  const iconColor = focused ? '#E8C97A' : '#4A6070';
 
   return (
     <Pressable
@@ -144,8 +144,8 @@ const s = StyleSheet.create({
     gap: 2,
   },
   tabButtonActive: {
-    backgroundColor: '#172B3F',
-    borderColor: 'rgba(210,177,92,0.3)',
+    backgroundColor: '#1E3550',
+    borderColor: 'rgba(210,177,92,0.65)',
   },
   iconCanvas: {
     width: ICON_SIZE,
@@ -160,9 +160,9 @@ const s = StyleSheet.create({
     color: '#EEF3F7',
   },
   tabUnderline: {
-    marginTop: 4,
-    width: 18,
-    height: 2,
+    marginTop: 3,
+    width: 24,
+    height: 3,
     borderRadius: 999,
     backgroundColor: 'transparent',
   },
