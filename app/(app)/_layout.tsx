@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { Tabs, usePathname } from 'expo-router';
 import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 import { Pressable, Text, View, StyleSheet, Platform } from 'react-native';
 import { Canvas, Path } from '@shopify/react-native-skia';
@@ -40,7 +40,7 @@ export default function AppLayout() {
               name="index"
               options={{
                 tabBarButton: (props) => (
-                  <TabButton {...props} label="Home" icon="home" />
+                  <TabButton {...props} label="Home" icon="home" routeName="index" />
                 ),
               }}
             />
@@ -48,7 +48,7 @@ export default function AppLayout() {
               name="session"
               options={{
                 tabBarButton: (props) => (
-                  <TabButton {...props} label="Session" icon="session" />
+                  <TabButton {...props} label="Session" icon="session" routeName="session" />
                 ),
               }}
             />
@@ -56,7 +56,7 @@ export default function AppLayout() {
               name="history"
               options={{
                 tabBarButton: (props) => (
-                  <TabButton {...props} label="History" icon="history" />
+                  <TabButton {...props} label="History" icon="history" routeName="history" />
                 ),
               }}
             />
@@ -64,7 +64,7 @@ export default function AppLayout() {
               name="equipment"
               options={{
                 tabBarButton: (props) => (
-                  <TabButton {...props} label="Equipment" icon="equipment" />
+                  <TabButton {...props} label="Equipment" icon="equipment" routeName="equipment" />
                 ),
               }}
             />
@@ -72,9 +72,13 @@ export default function AppLayout() {
               name="settings"
               options={{
                 tabBarButton: (props) => (
-                  <TabButton {...props} label="Settings" icon="settings" />
+                  <TabButton {...props} label="Settings" icon="settings" routeName="settings" />
                 ),
               }}
+            />
+            <Tabs.Screen
+              name="shot"
+              options={{ href: null }}
             />
           </Tabs>
         </MevoSessionProvider>
@@ -86,11 +90,16 @@ export default function AppLayout() {
 function TabButton({
   label,
   icon,
+  routeName,
   accessibilityState,
   onPress,
   onLongPress,
-}: BottomTabBarButtonProps & Readonly<{ label: string; icon: TabIconName }>) {
-  const focused = accessibilityState?.selected === true;
+}: BottomTabBarButtonProps & Readonly<{ label: string; icon: TabIconName; routeName: string }>) {
+  const pathname = usePathname();
+  const focused =
+    routeName === 'index'
+      ? pathname === '/' || pathname === ''
+      : pathname === `/${routeName}` || pathname.startsWith(`/${routeName}/`);
   const iconColor = focused ? '#E8C97A' : '#4A6070';
 
   return (
