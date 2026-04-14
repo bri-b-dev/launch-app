@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useAuth } from '../../../lib/hooks/use-auth';
 import { syncToSupabase, type SyncStatus } from '../../../lib/supabase/sync';
@@ -21,6 +22,7 @@ const PLACEHOLDER_SETTINGS = [
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
   const db = useSQLiteContext();
+  const router = useRouter();
 
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
@@ -64,46 +66,59 @@ export default function SettingsScreen() {
             Lokale Trainingsdaten manuell in die Cloud sichern. Nur bei bestehender Internetverbindung ausführen — nicht beim Mevo+ WLAN.
           </Text>
 
-          {lastSyncedAt != null && syncStatus !== 'error' && (
-            <Text style={s.syncTimestamp}>
-              Zuletzt synchronisiert: {new Date(lastSyncedAt).toLocaleString('de-DE')}
-            </Text>
-          )}
+          {user == null ? (
+            <Pressable
+              style={s.syncButton}
+              onPress={() => router.push('/(auth)/login')}
+            >
+              <Text style={s.syncButtonText}>Anmelden für Cloud-Sync</Text>
+            </Pressable>
+          ) : (
+            <>
+              {lastSyncedAt != null && syncStatus !== 'error' && (
+                <Text style={s.syncTimestamp}>
+                  Zuletzt synchronisiert: {new Date(lastSyncedAt).toLocaleString('de-DE')}
+                </Text>
+              )}
 
-          {syncStatus === 'error' && syncError != null && (
-            <Text style={s.syncError}>{syncError}</Text>
-          )}
+              {syncStatus === 'error' && syncError != null && (
+                <Text style={s.syncError}>{syncError}</Text>
+              )}
 
-          <Pressable
-            style={({ pressed }) => [
-              s.syncButton,
-              syncStatus === 'success' && s.syncButtonSuccess,
-              syncStatus === 'error' && s.syncButtonError,
-              (pressed || syncStatus === 'syncing') && s.syncButtonPressed,
-            ]}
-            onPress={handleSync}
-            disabled={syncStatus === 'syncing'}
-          >
-            {syncStatus === 'syncing' ? (
-              <ActivityIndicator size="small" color="#5FA7FF" />
-            ) : (
-              <Text style={[
-                s.syncButtonText,
-                syncStatus === 'success' && s.syncButtonTextSuccess,
-                syncStatus === 'error' && s.syncButtonTextError,
-              ]}>
-                {syncStatus === 'success' ? 'Synchronisiert' : syncStatus === 'error' ? 'Erneut versuchen' : 'Mit Cloud synchronisieren'}
-              </Text>
-            )}
-          </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  s.syncButton,
+                  syncStatus === 'success' && s.syncButtonSuccess,
+                  syncStatus === 'error' && s.syncButtonError,
+                  (pressed || syncStatus === 'syncing') && s.syncButtonPressed,
+                ]}
+                onPress={handleSync}
+                disabled={syncStatus === 'syncing'}
+              >
+                {syncStatus === 'syncing' ? (
+                  <ActivityIndicator size="small" color="#5FA7FF" />
+                ) : (
+                  <Text style={[
+                    s.syncButtonText,
+                    syncStatus === 'success' && s.syncButtonTextSuccess,
+                    syncStatus === 'error' && s.syncButtonTextError,
+                  ]}>
+                    {syncStatus === 'success' ? 'Synchronisiert' : syncStatus === 'error' ? 'Erneut versuchen' : 'Mit Cloud synchronisieren'}
+                  </Text>
+                )}
+              </Pressable>
+            </>
+          )}
         </View>
 
-        <View style={s.accountCard}>
-          <Text style={s.accountEmail}>{user?.email}</Text>
-          <Pressable style={s.signOutButton} onPress={signOut}>
-            <Text style={s.signOutText}>Sign out</Text>
-          </Pressable>
-        </View>
+        {user != null && (
+          <View style={s.accountCard}>
+            <Text style={s.accountEmail}>{user.email}</Text>
+            <Pressable style={s.signOutButton} onPress={signOut}>
+              <Text style={s.signOutText}>Abmelden</Text>
+            </Pressable>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
