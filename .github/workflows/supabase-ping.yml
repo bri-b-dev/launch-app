@@ -1,0 +1,44 @@
+name: Ping Supabase (Postgres via node)
+
+on:
+  schedule:
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Ping Supabase Postgres (SELECT 1)
+        env:
+          SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_KEY }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "Missing secret SUPABASE_DB_URL (Postgres connection string)" >&2
+            exit 1
+          fi
+          cat > ping.js <<'JS'
+          const { Client } = require('pg');
+          (async () => {
+            const client = new Client({ connectionString: process.env.SUPABASE_DB_URL, ssl: { rejectUnauthorized: false } });
+            try {
+              await client.connect();
+              const res = await client.query('SELECT 1');
+              console.log('ok', res.rows);
+              await client.end();
+              process.exit(0);
+            } catch (e) {
+              console.error('db error', e);
+              process.exit(2);
+            }
+          })();
+          JS
+          npm init -y >/dev/null
+          npm i pg@8 >/dev/null
+          node ping.js
